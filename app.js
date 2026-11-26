@@ -42,7 +42,7 @@
     roundSize: 10, dailyNewDefault: 10, intervals: [0, 1, 3, 7, 14, 30, 60], learnedBox: 2,
     xp: { r: 10, p: 5, w: 2 }, levels: [[0, 'Стажёр']]
   };
-  var VERSION = '', TOPICS = [], TOPIC = {}, QS = [], BY_ID = {}, WEEKS = [], CHANGES = [];
+  var VERSION = '', TOPICS = [], TOPIC = {}, QS = [], BY_ID = {}, WEEKS = [], CHANGES = [], CONCEPTS = {};
 
   // =====================================================================
   // Хранилище прогресса
@@ -108,14 +108,15 @@
 
   function loadData() {
     return fetchJSON('data/manifest.json').then(function (m) {
-      return Promise.all([opt(m.config), opt(m.topics), opt(m.weeks), opt(m.changelog)].concat((m.packs || []).map(opt)))
+      return Promise.all([opt(m.config), opt(m.topics), opt(m.weeks), opt(m.changelog), opt(m.concepts)].concat((m.packs || []).map(opt)))
         .then(function (r) {
           if (r[0]) for (var k in r[0]) CFG[k] = r[0][k];
           if (r[1]) { TOPICS = r[1].topics || []; TOPIC = {}; TOPICS.forEach(function (t) { TOPIC[t.id] = t; }); }
           if (r[2]) WEEKS = r[2].weeks || [];
           if (r[3]) CHANGES = r[3].entries || [];
+          if (r[4]) CONCEPTS = r[4].concepts || {};
           var qs = [], seen = {};
-          r.slice(4).forEach(function (p) {
+          r.slice(5).forEach(function (p) {
             if (!p) return;
             (p.questions || []).forEach(function (q) {
               if (!q || !q.id || seen[q.id] || !TYPES[q.type] || !TOPIC[q.topic]) return; // незнакомое пропускаем, а не падаем
@@ -147,6 +148,17 @@
   // темы недели: блоки вопросов из data/weeks.json → focus
   function setOf(ids) { var o = {}; (ids || []).forEach(function (i) { o[i] = 1; }); return o; }
   function weekFocus() { var w = currentWeek(); return (w && w.focus) || []; }
+  function isCase(q) { return q.topic === 'cases' || q.topic === 'articles'; }      // развёрнутый ответ — отдельно от ежедневного раунда
+  function isExtra(q) { return !!(TOPIC[q.topic] && TOPIC[q.topic].extra); }       // дополнительная тема — только по желанию
+  function dailyOk(q) { return !isCase(q) && !isExtra(q); }
+  function caseScope() {
+    var ids = []; weekFocus().forEach(function (b) { b.ids.forEach(function (i) { if (BY_ID[i] && isCase(BY_ID[i])) ids.push(i); }); });
+    if (!ids.length) QS.forEach(function (q) { if (isCase(q)) ids.push(q.id); });
+    return { idset: setOf(ids), name: 'Кейсы недели' };
+  }
+  function casesAvailable() { var f = caseScope(); return dueList(f).length + newList(f).length; }
+  function dkList() { return QS.filter(function (q) { var s = st(q.id); return s && s.dk > 0 && !isLearned(q.id); }); }
+  function markDk(q) { var s = st(q.id); if (!s) return; s.dk = (s.dk || 0) + 1; s.dkAt = today(); save(); }
   function blockScope(b) { return { idset: setOf(b.ids), name: b.name }; }
   function weekScope() { var ids = []; weekFocus().forEach(function (b) { ids = ids.concat(b.ids); }); return ids.length ? { idset: setOf(ids), name: 'Темы недели' } : null; }
   function scopeStats(f) {
@@ -241,6 +253,37 @@
   function nextBtn() { return '<button class="btn full" data-act="next">' + (R.i + 1 < R.items.length ? 'Дальше' : 'Завершить') + '</button>'; }
   function readText() { var ta = $('#answer'); return ta ? ta.value : (R.ui.text || ''); }
 
+  var DUNNO = '<button class="btn ghost full" data-act="dunno">Не помню</button>';
+
+  // ответ целиком, если нажато «Не помню»
+  function dkView(q) {
+    var h = '<div class="ans dkmark"><div class="lbl">Не помню · вопрос добавлен в раздел «Не помню»</div></div>', L = 'ABCDEF';
+    if (q.type === 'input') h += answerBox(q.a, 'Ответ');
+    else if (q.type === 'order') h += '<div class="ans"><div class="lbl">Правильный порядок</div><ol class="rightorder">' + q.items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div>' + (q.a ? answerBox(q.a, 'Пояснение') : '');
+    else if (q.type === 'find') {
+      h += '<div class="code find">';
+      q.code.forEach(function (line, li) {
+        h += '<span class="ln"><span class="no">' + (li + 1) + '</span><span class="toks">';
+        line.forEach(function (tok, ti) { var e = q.err.some(function (x) { return x[0] === li && x[1] === ti; }); h += '<span class="tok' + (e ? ' right' : '') + '">' + esc(tok) + '</span> '; });
+        h += '</span></span>';
+      });
+      h += '</div>' + answerBox(q.a, 'Ошибка в зелёном элементе · Разбор');
+    } else if (q.type === 'pick') {
+      q.options.forEach(function (o, i) { h += '<div class="opt' + (i === q.wrong ? ' ok' : '') + '"><span class="k">' + L[i] + '</span>' + (q.plain ? '<div>' + esc(o) + '</div>' : '<div class="code">' + esc(o) + '</div>') + '</div>'; });
+      h += answerBox(q.a, 'Неправильный — ' + L[q.wrong] + ' · Разбор');
+    }
+    return h + '<div class="actions">' + nextBtn() + '</div>';
+  }
+
+  // «Простыми словами»: объяснение понятия с примером и ссылками (data/concepts.json)
+  function explainHtml(q) {
+    var c = q.concept && CONCEPTS[q.concept]; if (!c) return '';
+    var h = '<div class="explain"><div class="lbl">Простыми словами</div><h3>' + esc(c.title) + '</h3><p>' + esc(c.text) + '</p>';
+    if (c.example) h += '<p class="ex"><b>Пример.</b> ' + esc(c.example) + '</p>';
+    (c.links || []).forEach(function (l) { if (/^https:\/\//.test(l.url || '')) h += '<a class="srcbtn" href="' + esc(l.url) + '" target="_blank" rel="noopener"><span>' + esc(l.title) + '</span><b>↗</b></a>'; });
+    return h + '</div>';
+  }
+
   var TYPES = {
     // --- ввод ответа: check = "self" (самооценка) или "auto" (сверка с accept) ---
     input: {
@@ -248,7 +291,7 @@
         var auto = q.check === 'auto', h = '';
         if (!ui.revealed) {
           return '<textarea id="answer" rows="' + (auto ? 2 : 4) + '" placeholder="' + (auto ? 'Твой ответ' : 'Напиши, как вспомнишь') + '"></textarea>' +
-            '<div class="actions"><button class="btn full" data-act="reveal">' + (auto ? 'Проверить' : 'Показать ответ') + '</button></div>';
+            '<div class="actions"><button class="btn full" data-act="reveal">' + (auto ? 'Проверить' : 'Показать ответ') + '</button>' + DUNNO + '</div>';
         }
         h += mineBox(ui.text, 'Твой ответ') + answerBox(q.a, 'Эталон');
         if (q.blocks && ui.showBlocks) h += blocksHtml(q, ui);
@@ -264,7 +307,7 @@
       },
       act: {
         reveal: function (q, ui) { ui.text = readText(); ui.revealed = true; if (q.check === 'auto') finishQ(autoMatch(ui.text, q.accept) ? 'r' : 'w'); },
-        grade: function (q, ui, el) { finishQ(el.getAttribute('data-g')); if (q.blocks && ui.g !== 'r') ui.showBlocks = true; },
+        grade: function (q, ui, el) { finishQ(el.getAttribute('data-g')); if (ui.g === 'w') markDk(q); if (q.blocks && ui.g !== 'r') ui.showBlocks = true; },
         override: function (q, ui) {
           // отменить автооценку «неверно» и засчитать как верно
           S.log.pop(); S.xp -= CFG.xp.w; dayRec().answers--;
@@ -290,7 +333,7 @@
             (ui.g && p !== ii ? '<span class="fix">→ ' + (ii + 1) + '</span>' : '') + '</button>';
         });
         h += '<div class="actions">';
-        if (!ui.g) h += '<button class="btn full" data-act="checkord"' + (ui.ord.pick.length < q.items.length ? ' disabled' : '') + '>Проверить</button>';
+        if (!ui.g) h += '<button class="btn full" data-act="checkord"' + (ui.ord.pick.length < q.items.length ? ' disabled' : '') + '>Проверить</button>' + DUNNO;
         else { if (q.a) h += answerBox(q.a, 'Пояснение'); h += nextBtn(); }
         return h + '</div>';
       },
@@ -316,7 +359,7 @@
         h += '</div>';
         if (!ui.revealed) {
           return h + '<p class="muted small mt">Нажми на проблемный элемент и напиши, что с ним не так.</p><textarea id="answer" rows="3" placeholder="Что не так"></textarea>' +
-            '<div class="actions"><button class="btn full" data-act="checkfind"' + (ui.sel ? '' : ' disabled') + '>Проверить</button></div>';
+            '<div class="actions"><button class="btn full" data-act="checkfind"' + (ui.sel ? '' : ' disabled') + '>Проверить</button>' + DUNNO + '</div>';
         }
         h += mineBox(ui.text, 'Твоё объяснение') + answerBox(q.a, ui.hit ? 'Элемент найден верно · Разбор' : 'Ошибка в зелёном элементе · Разбор') + '<div class="actions">';
         if (!ui.g) h += '<div class="grades two"><button class="btn g-ok" data-act="grade" data-g="r">Объяснила верно</button><button class="btn g-mid" data-act="grade" data-g="p">Объяснила частично</button></div>';
@@ -344,6 +387,7 @@
             (q.plain ? '<div>' + esc(o) + '</div>' : '<div class="code">' + esc(o) + '</div>') + '</button>';
         });
         if (ui.g) h += answerBox(q.a, ui.g === 'r' ? 'Верно · Разбор' : 'Неправильный — ' + L[q.wrong] + ' · Разбор') + '<div class="actions">' + nextBtn() + '</div>';
+        else h += '<div class="actions">' + DUNNO + '</div>';
         return h;
       },
       act: { pick: function (q, ui, el) { if (ui.g) return; ui.pick = +el.getAttribute('data-i'); finishQ(ui.pick === q.wrong ? 'r' : 'w'); } }
@@ -449,7 +493,7 @@
   }
 
   function renderHome() {
-    var t = today(), d = parse(t), due = dueList().length, nl = Math.min(newLeft(), newList(weekScope()).length), sk = streak(), weak = weakList().length;
+    var t = today(), d = parse(t), due = dueList().filter(dailyOk).length, nl = Math.min(newLeft(), newList(weekScope()).filter(dailyOk).length), sk = streak(), weak = weakList().length, dk = dkList().length, cs = casesAvailable();
     var html = '<div class="top"><div><h1>Тренажёр</h1><div class="date">' + WD[d.getDay()] + ', ' + human(t) + '</div></div>' +
       '<div class="chips"><span class="chip">🔥 ' + sk + '</span><span class="chip">' + S.xp + ' XP</span></div></div>';
     html += '<div class="hero">' + BLOB + '<h1>Раунд дня</h1>';
@@ -457,7 +501,9 @@
     else if (due + nl > 0) html += '<p>К повторению: <b>' + due + '</b> · Новых: <b>' + nl + '</b></p><button class="btn light" data-act="start">Начать раунд</button></div>';
     else html += '<p>На сегодня всё: повторы сделаны, новые вопросы дня открыты.</p><button class="btn light" data-act="free">Свободная тренировка</button></div>';
     html += weekDays();
+    if (dk) html += '<button class="card row dkcard" data-act="dk" style="width:100%;text-align:left"><div><h3>Не помню</h3><div class="muted small">' + dk + ' ' + plural(dk, 'вопрос', 'вопроса', 'вопросов') + ' — надо поработать</div></div><span class="link">Повторить</span></button>';
     if (weak) html += '<button class="card row weak" data-act="weak" style="width:100%;text-align:left"><div><h3>Работа над ошибками</h3><div class="muted small">' + weak + ' ' + plural(weak, 'вопрос', 'вопроса', 'вопросов') + ', где ты ошибалась</div></div><span class="link">Начать</span></button>';
+    if (cs) html += '<button class="card row" data-act="cases" style="width:100%;text-align:left"><div><h3>Кейсы недели</h3><div class="muted small">' + cs + ' ' + plural(cs, 'кейс', 'кейса', 'кейсов') + ' с развёрнутым ответом</div></div><span class="link">Решать</span></button>';
     var focus = weekFocus();
     if (focus.length) {
       html += '<h2>Темы недели</h2><div class="grid">';
@@ -484,6 +530,7 @@
       tags.forEach(function (x) { html += '<button data-act="tag" data-tag="' + esc(x.t) + '">' + esc(x.t) + ' · ' + x.n + '</button>'; });
       html += '</div>';
     }
+    if (QS.some(isExtra)) html += '<h2>Дополнительно</h2><button class="card row" data-act="extra" style="width:100%;text-align:left"><div><h3>Общая теория аналитики</h3><div class="muted small">СУБД, OLTP и OLAP, хранилища, ETL — по желанию</div></div><span class="link">Открыть</span></button>';
     var w = currentWeek();
     if (w) {
       var ws = S.week[w.id] || {}, done = (w.min || []).filter(function (_, i) { return ws.min && ws.min[i]; }).length;
@@ -498,14 +545,22 @@
   function startRound(mode, f) {
     f = f || null; var N = CFG.roundSize, items;
     if (mode === 'weak') items = weakList(f).slice(0, N);
+    else if (mode === 'dk') items = dkList().slice(0, N);
+    else if (mode === 'cases' || mode === 'extra') {
+      f = mode === 'cases' ? caseScope() : { topic: QS.filter(isExtra)[0] ? QS.filter(isExtra)[0].topic : '', name: 'Общая теория аналитики' };
+      var dC = dueList(f), nC = shuffle(newList(f)); items = dC.concat(nC).slice(0, mode === 'cases' ? 5 : N);
+      if (!items.length) items = shuffle(QS.filter(function (q) { return inScope(q, f); })).slice(0, mode === 'cases' ? 5 : N);
+    }
     else if (mode === 'free' || mode === 'tag') {
       var pool = QS.filter(function (q) { return inScope(q, f); });
       if (mode === 'tag') { var dueT = dueList(f), freshT = shuffle(newList(f)); items = dueT.concat(freshT).slice(0, N); if (items.length < N) items = items.concat(shuffle(pool.filter(function (q) { return items.indexOf(q) < 0; })).slice(0, N - items.length)); }
-      else { var seen = pool.filter(function (q) { return st(q.id); }); items = shuffle(seen.length >= 5 ? seen : pool).slice(0, N); }
+      else { if (!f) pool = pool.filter(dailyOk); var seen = pool.filter(function (q) { return st(q.id); }); items = shuffle(seen.length >= 5 ? seen : pool).slice(0, N); }
     } else {
-      var due = dueList(f), fresh = shuffle(newList(f || weekScope())).slice(0, newLeft());
+      var due = dueList(f), fresh = shuffle(newList(f || weekScope()));
+      if (!f) { due = due.filter(dailyOk); fresh = fresh.filter(dailyOk); }
+      fresh = fresh.slice(0, newLeft());
       items = due.slice(0, N); fresh.forEach(function (q) { if (items.length < N) items.push(q); });
-      if (!items.length) return QS.some(function (q) { return inScope(q, f); }) ? startRound('free', f) : toast('Здесь пока нет вопросов');
+      if (!items.length) return QS.some(function (q) { return inScope(q, f) && (f || dailyOk(q)); }) ? startRound('free', f) : toast('Здесь пока нет вопросов');
     }
     if (!items.length) return toast('Здесь пока нет вопросов');
     R = { mode: mode, f: f, items: shuffle(items), i: 0, res: [], xp0: S.xp, lv0: level(S.xp).n, ui: {} };
@@ -513,6 +568,7 @@
   }
   function scopeName(f, mode) {
     if (mode === 'weak') return 'Работа над ошибками';
+    if (mode === 'dk') return 'Не помню';
     if (f && f.topic) return TOPIC[f.topic] ? TOPIC[f.topic].name : '';
     if (f && f.tag) return f.tag;
     if (f && f.name) return f.name;
@@ -520,7 +576,7 @@
   }
   function storyHtml(q) {
     var h = '<div class="story"><div class="lbl">Кейс</div><h3>' + esc(q.case || '') + '</h3><p>' + esc(q.story) + '</p>';
-    if (q.src && /^https:\/\//.test(q.src.url || '')) h += '<a class="src" href="' + esc(q.src.url) + '" target="_blank" rel="noopener">' + esc(q.src.title || 'Источник') + ' ↗</a>';
+    if (q.src && /^https:\/\//.test(q.src.url || '')) h += '<a class="srcbtn main" href="' + esc(q.src.url) + '" target="_blank" rel="noopener"><span>Открыть статью: ' + esc(q.src.title || 'источник') + '</span><b>↗</b></a>';
     return h + '</div>';
   }
   function tableHtml(t) {
@@ -551,7 +607,15 @@
     if (q.story) html += storyHtml(q);
     html += '<p class="q">' + esc(q.q) + '</p>';
     if (q.table) html += tableHtml(q.table);
-    html += T.render(q, ui) + '</div>';
+    if (ui.dk) {
+      var dv = dkView(q), cut = dv.lastIndexOf('<div class="actions">');
+      html += dv.slice(0, cut) + explainHtml(q) + dv.slice(cut);
+    } else {
+      var body = T.render(q, ui);
+      if (ui.g && ui.g !== 'r') { var at = body.lastIndexOf('<div class="actions">'); if (at >= 0) body = body.slice(0, at) + explainHtml(q) + body.slice(at); }
+      html += body;
+    }
+    html += '</div>';
     $('#view').innerHTML = html;
     var ta = $('#answer'); if (ta && ui.text) ta.value = ui.text;
   }
@@ -582,7 +646,9 @@
     if (R.newAch && R.newAch.length) html += '<div class="card"><h3>Достижения</h3><ul>' + R.newAch.map(function (a) { return '<li>' + esc(achName(a)) + '</li>'; }).join('') + '</ul></div>';
     var wrong = R.items.filter(function (_, i) { return R.res[i] === 'w'; });
     if (wrong.length) html += '<div class="card"><h3>Вернутся завтра</h3><ul>' + wrong.map(function (q) { return '<li>' + esc(q.t) + '</li>'; }).join('') + '</ul></div>';
-    html += '<div class="actions"><button class="btn full" data-act="again">Ещё раунд</button><button class="btn ghost full" data-act="home">На главную</button></div>';
+    var csN = R.mode === 'plan' && !R.f ? casesAvailable() : 0;
+    if (csN) html += '<div class="card offer"><h3>Перейти к кейсам?</h3><p class="small muted">' + csN + ' ' + plural(csN, 'кейс', 'кейса', 'кейсов') + ' недели с развёрнутым ответом. Решаются отдельно от ежедневного раунда.</p><button class="btn full mt" data-act="cases">Перейти к кейсам</button></div>';
+    html += '<div class="actions"><button class="btn ' + (csN ? 'ghost ' : '') + 'full" data-act="again">Ещё раунд</button><button class="btn ghost full" data-act="home">На главную</button></div>';
     $('#view').innerHTML = html;
   }
 
@@ -661,6 +727,10 @@
     html += '<button class="card row mt2" data-act="report" style="width:100%;text-align:left;background:var(--ink);color:var(--on-ink)"><div><h3>Отчёт для Claude</h3><div class="small" style="opacity:.7">Слабые места и заметки одним текстом — скопируй и отправь в чат</div></div><span class="link">Открыть</span></button>';
     var freq = QS.filter(function (q) { var s = st(q.id); return s && s.wrong > 0; })
       .sort(function (a, b) { return st(b.id).wrong - st(a.id).wrong || weakness(b) - weakness(a); });
+    var dks = dkList();
+    html += '<h2>Не помню</h2>';
+    if (!dks.length) html += '<div class="card muted">Сюда попадают вопросы, где ты нажала «Не помню» или «Не вспомнила». Вопрос уходит отсюда, когда ты его выучишь.</div>';
+    else html += '<div class="card dkcard"><p class="small">Над этим надо поработать:</p><ul class="dklist">' + dks.slice(0, 15).map(function (q) { return '<li>' + esc(q.t) + '</li>'; }).join('') + '</ul>' + (dks.length > 15 ? '<p class="small">и ещё ' + (dks.length - 15) + '</p>' : '') + '<button class="btn full mt" data-act="dk">Повторить «Не помню»</button></div>';
     html += '<h2>Работа над ошибками</h2>';
     if (!freq.length) html += '<div class="card muted">Здесь появятся вопросы, в которых ты ошибаешься чаще всего.</div>';
     else {
@@ -709,6 +779,10 @@
     L.push(''); L.push('СЛАБЫЕ МЕСТА (до 20):');
     if (!weak.length) L.push('- пока нет');
     weak.forEach(function (q) { var s = st(q.id); L.push('- [' + q.id + '] ' + q.t + ': верно ' + s.right + ', частично ' + (s.partial || 0) + ', ошибок ' + s.wrong); });
+    var dks = dkList();
+    L.push(''); L.push('НЕ ПОМНЮ (' + dks.length + '):');
+    if (!dks.length) L.push('- нет');
+    dks.slice(0, 30).forEach(function (q) { L.push('- [' + q.id + '] ' + q.t + ' (раз: ' + st(q.id).dk + ')'); });
     var nk = Object.keys(S.notes);
     L.push(''); L.push('ЗАМЕТКИ К ВОПРОСАМ:');
     if (!nk.length) L.push('- нет');
@@ -736,6 +810,10 @@
     start: function () { startRound('plan'); },
     free: function () { startRound('free'); },
     weak: function () { startRound('weak'); },
+    dk: function () { startRound('dk'); },
+    cases: function () { R = null; startRound('cases'); },
+    extra: function () { startRound('extra'); },
+    dunno: function () { var q = R.items[R.i]; R.ui.text = readText(); R.ui.dk = true; R.ui.revealed = true; finishQ('w'); markDk(q); renderRound(); },
     topic: function (el) { startRound('plan', { topic: el.getAttribute('data-topic') }); },
     tag: function (el) { startRound('tag', { tag: el.getAttribute('data-tag') }); },
     block: function (el) { var b = weekFocus()[+el.getAttribute('data-b')]; if (b) startRound('plan', blockScope(b)); },

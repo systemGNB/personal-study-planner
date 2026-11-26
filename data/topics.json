@@ -53,6 +53,12 @@
    "name": "Резюме и поведенческие вопросы",
    "style": "outline",
    "planned": true
+  },
+  {
+   "id": "theory",
+   "name": "Общая теория аналитики",
+   "style": "outline",
+   "extra": true
   }
  ]
 }

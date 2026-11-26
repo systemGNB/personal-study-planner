@@ -96,6 +96,12 @@ def main():
         print('\n'.join(errors)); sys.exit(1)
     tp = load(m.get('topics', 'topics.json')) or {}
     topics = {t['id'] for t in tp.get('topics', [])}
+    extra = {t['id'] for t in tp.get('topics', []) if t.get('extra')}
+    cc = (load(m['concepts']) or {}).get('concepts', {}) if m.get('concepts') else {}
+    for cid, c in cc.items():
+        for l in c.get('links', []):
+            if not str(l.get('url', '')).startswith('https://'):
+                errors.append(f'concepts.json [{cid}]: ссылка без https')
     for k in ('config', 'weeks', 'changelog'):
         if m.get(k):
             load(m[k])
@@ -111,6 +117,7 @@ def main():
                 if not str(l.get('url', '')).startswith('https://'):
                     errors.append(f'weeks.json [{w.get("id")}]: ссылка без https — {l.get("title")}')
     all_ids, by_topic, by_type = Counter(), Counter(), Counter()
+    extra_ids = set()
     for rel in m.get('packs', []):
         pk = load(rel)
         if not pk:
@@ -121,6 +128,10 @@ def main():
         for q in pk.get('questions', []):
             check_q(q, rel, topics)
             all_ids[q.get('id')] += 1
+            if q.get('concept') and q['concept'] not in cc:
+                errors.append(f'{rel} [{q.get("id")}]: нет понятия «{q["concept"]}» в concepts.json')
+            if q.get('topic') in extra:
+                extra_ids.add(q.get('id'))
             by_topic[q.get('topic')] += 1
             by_type[q.get('type')] += 1
             if fix:
@@ -137,7 +148,7 @@ def main():
                 if miss:
                     errors.append(f'weeks.json [{w.get("id")}] блок «{b.get("name")}»: нет вопросов {miss[:5]}')
         placed = {i for w in weeks.get('weeks', []) for b in w.get('focus', []) for i in b.get('ids', [])}
-        free = [i for i in all_ids if i not in placed]
+        free = [i for i in all_ids if i not in placed and i not in extra_ids]
         if free:
             warns.append(f'{len(free)} вопросов не распределены по неделям: {free[:8]}')
     for i, n in all_ids.items():
