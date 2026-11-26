@@ -7,7 +7,7 @@
   },
   {
    "id": "marketing",
-   "name": "Маркетинговые метрики",
+   "name": "Маркетинговые метрики и юнит-экономика",
    "style": "red"
   },
   {
@@ -35,6 +35,24 @@
    "name": "Кейсы из статей",
    "style": "lav",
    "wide": true
+  },
+  {
+   "id": "powerbi",
+   "name": "Power BI",
+   "style": "peri",
+   "planned": true
+  },
+  {
+   "id": "python",
+   "name": "Python (pandas)",
+   "style": "pink",
+   "planned": true
+  },
+  {
+   "id": "career",
+   "name": "Резюме и поведенческие вопросы",
+   "style": "outline",
+   "planned": true
   }
  ]
 }

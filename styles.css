@@ -361,3 +361,13 @@ body.locked .tabs,body.locked::after{display:none}
 .pk{width:72px;height:72px;border-radius:50%;background:var(--card);font-size:26px;font-weight:600;color:var(--fg)}
 .pk:active{background:var(--lav)}
 body.veil #view{visibility:hidden}
+
+/* источники недели и частые ошибки */
+.links{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.lnk{display:block;background:var(--card);border-radius:18px;padding:12px 14px;color:var(--fg);text-decoration:none}
+.lnk .lt{display:block;font-weight:700;overflow-wrap:anywhere}
+.lnk .ln2{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+ol.errs{margin:6px 0 0;padding-left:20px}
+ol.errs li{margin-bottom:6px}
+ol.errs li span{display:block}
+ol.errs li b{display:block;font-size:12px;color:var(--bad);font-weight:600}

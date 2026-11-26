@@ -137,7 +137,24 @@
   // =====================================================================
   function st(id) { return S.q[id]; }
   function isLearned(id) { var s = st(id); return !!(s && s.box >= CFG.learnedBox); }
-  function inScope(q, f) { return !f || (f.topic ? q.topic === f.topic : true) && (f.tag ? (q.tags || []).indexOf(f.tag) >= 0 : true); }
+  function inScope(q, f) {
+    if (!f) return true;
+    if (f.topic && q.topic !== f.topic) return false;
+    if (f.tag && (q.tags || []).indexOf(f.tag) < 0) return false;
+    if (f.idset && !f.idset[q.id]) return false;
+    return true;
+  }
+  // темы недели: блоки вопросов из data/weeks.json → focus
+  function setOf(ids) { var o = {}; (ids || []).forEach(function (i) { o[i] = 1; }); return o; }
+  function weekFocus() { var w = currentWeek(); return (w && w.focus) || []; }
+  function blockScope(b) { return { idset: setOf(b.ids), name: b.name }; }
+  function weekScope() { var ids = []; weekFocus().forEach(function (b) { ids = ids.concat(b.ids); }); return ids.length ? { idset: setOf(ids), name: 'Темы недели' } : null; }
+  function scopeStats(f) {
+    var qs = QS.filter(function (q) { return inScope(q, f); });
+    var learned = qs.filter(function (q) { return isLearned(q.id); }).length, seen = qs.filter(function (q) { return st(q.id); }).length;
+    var p = qs.length ? learned / qs.length : 0;
+    return { total: qs.length, learned: learned, seen: seen, pct: p, lvl: Math.min(5, Math.floor(p * 5 + 1e-9)) };
+  }
   function dueList(f) {
     var t = today();
     return QS.filter(function (q) { var s = st(q.id); return s && s.due <= t && inScope(q, f); })
@@ -432,7 +449,7 @@
   }
 
   function renderHome() {
-    var t = today(), d = parse(t), due = dueList().length, nl = Math.min(newLeft(), newList().length), sk = streak(), weak = weakList().length;
+    var t = today(), d = parse(t), due = dueList().length, nl = Math.min(newLeft(), newList(weekScope()).length), sk = streak(), weak = weakList().length;
     var html = '<div class="top"><div><h1>Тренажёр</h1><div class="date">' + WD[d.getDay()] + ', ' + human(t) + '</div></div>' +
       '<div class="chips"><span class="chip">🔥 ' + sk + '</span><span class="chip">' + S.xp + ' XP</span></div></div>';
     html += '<div class="hero">' + BLOB + '<h1>Раунд дня</h1>';
@@ -441,6 +458,17 @@
     else html += '<p>На сегодня всё: повторы сделаны, новые вопросы дня открыты.</p><button class="btn light" data-act="free">Свободная тренировка</button></div>';
     html += weekDays();
     if (weak) html += '<button class="card row weak" data-act="weak" style="width:100%;text-align:left"><div><h3>Работа над ошибками</h3><div class="muted small">' + weak + ' ' + plural(weak, 'вопрос', 'вопроса', 'вопросов') + ', где ты ошибалась</div></div><span class="link">Начать</span></button>';
+    var focus = weekFocus();
+    if (focus.length) {
+      html += '<h2>Темы недели</h2><div class="grid">';
+      focus.forEach(function (b, bi) {
+        var f = blockScope(b), ts = scopeStats(f); if (!ts.total) return;
+        var dk = dueList(f).length;
+        html += '<button class="tile s-' + esc(b.style || 'outline') + (focus.length % 2 && bi === focus.length - 1 ? ' wide' : '') + '" data-act="block" data-b="' + bi + '"><div><div class="lvl">Уровень ' + ts.lvl + ' из 5</div><h3>' + esc(b.name) + '</h3></div>' +
+          '<div><div class="bar"><i style="width:' + Math.round(ts.pct * 100) + '%"></i></div><div class="meta">' + ts.learned + ' из ' + ts.total + ' выучено' + (dk ? ' · повторить ' + dk : '') + '</div></div></button>';
+      });
+      html += '</div>';
+    } else {
     html += '<h2>Темы</h2><div class="grid">';
     TOPICS.forEach(function (tp) {
       var ts = topicStats(tp.id); if (!ts.total) return;
@@ -449,6 +477,7 @@
         '<div><div class="bar"><i style="width:' + Math.round(ts.pct * 100) + '%"></i></div><div class="meta">' + ts.learned + ' из ' + ts.total + ' выучено' + (dk ? ' · повторить ' + dk : '') + '</div></div></button>';
     });
     html += '</div>';
+    }
     var tags = allTags();
     if (tags.length) {
       html += '<h2>Подборки</h2><div class="seg">';
@@ -474,7 +503,7 @@
       if (mode === 'tag') { var dueT = dueList(f), freshT = shuffle(newList(f)); items = dueT.concat(freshT).slice(0, N); if (items.length < N) items = items.concat(shuffle(pool.filter(function (q) { return items.indexOf(q) < 0; })).slice(0, N - items.length)); }
       else { var seen = pool.filter(function (q) { return st(q.id); }); items = shuffle(seen.length >= 5 ? seen : pool).slice(0, N); }
     } else {
-      var due = dueList(f), fresh = shuffle(newList(f)).slice(0, newLeft());
+      var due = dueList(f), fresh = shuffle(newList(f || weekScope())).slice(0, newLeft());
       items = due.slice(0, N); fresh.forEach(function (q) { if (items.length < N) items.push(q); });
       if (!items.length) return QS.some(function (q) { return inScope(q, f); }) ? startRound('free', f) : toast('Здесь пока нет вопросов');
     }
@@ -486,6 +515,7 @@
     if (mode === 'weak') return 'Работа над ошибками';
     if (f && f.topic) return TOPIC[f.topic] ? TOPIC[f.topic].name : '';
     if (f && f.tag) return f.tag;
+    if (f && f.name) return f.name;
     return mode === 'free' ? 'Свободная тренировка' : 'Все темы';
   }
   function storyHtml(q) {
@@ -596,6 +626,7 @@
     html += '<div class="sec min mt"><div class="row"><h3>Минимум</h3><span class="small">' + countDone(w, 'min') + ' из ' + (w.min || []).length + '</span></div>' + checklist(w, 'min') + '</div>';
     if (w.max && w.max.length) html += '<div class="sec max"><div class="row"><h3>Максимум</h3><span class="small">если останется время</span></div>' + checklist(w, 'max') + '</div>';
     if (w.check && w.check.length) html += '<div class="sec chkd"><h3>Самопроверка в конце недели</h3>' + checklist(w, 'check') + '</div>';
+    if (w.focus && w.focus.length) html += '<div class="card"><h3>Темы недели в тренажёре</h3><ul>' + w.focus.map(function (b) { return '<li>' + esc(b.name) + ' — ' + b.ids.length + ' ' + plural(b.ids.length, 'вопрос', 'вопроса', 'вопросов') + '</li>'; }).join('') + '</ul></div>';
     if (w.start <= t) {
       var r = weekResult(w);
       html += '<h2>Итог недели</h2><div class="stats3"><div class="stat" style="background:var(--lav)"><b>' + r.rounds + '</b><span>' + plural(r.rounds, 'раунд', 'раунда', 'раундов') + '</span></div><div class="stat" style="background:var(--peri)"><b>' + r.acc + '%</b><span>верных</span></div><div class="stat" style="background:var(--pink)"><b>+' + r.xp + '</b><span>XP</span></div></div>';
@@ -607,6 +638,14 @@
         });
         html += '</div>';
       } else html += '<div class="card muted">Здесь появятся вопросы, выученные за неделю. Вопрос считается выученным после двух верных ответов в разные дни.</div>';
+    }
+    if (w.links && w.links.length) {
+      html += '<h2>Источники недели</h2><div class="links">';
+      w.links.forEach(function (l) {
+        if (!/^https:\/\//.test(l.url || '')) return;
+        html += '<a class="lnk" href="' + esc(l.url) + '" target="_blank" rel="noopener"><span class="lt">' + esc(l.title) + ' ↗</span>' + (l.note ? '<span class="ln2">' + esc(l.note) + '</span>' : '') + '</a>';
+      });
+      html += '</div>';
     }
     $('#view').innerHTML = html;
   }
@@ -620,10 +659,20 @@
     html += '<div class="lvlcard"><div class="small">Уровень ' + lv.n + ' из ' + lv.total + '</div><h1 style="font-size:28px;margin-top:4px">' + esc(lv.name) + '</h1>' +
       '<div class="bar"><i style="width:' + p + '%"></i></div><div class="small mt">' + S.xp + ' XP' + (lv.to ? ' · до уровня «' + esc(lv.next) + '» ' + (lv.to - S.xp) + ' XP' : '') + '</div></div>';
     html += '<button class="card row mt2" data-act="report" style="width:100%;text-align:left;background:var(--ink);color:var(--on-ink)"><div><h3>Отчёт для Claude</h3><div class="small" style="opacity:.7">Слабые места и заметки одним текстом — скопируй и отправь в чат</div></div><span class="link">Открыть</span></button>';
-    html += '<h2>Темы</h2>';
+    var freq = QS.filter(function (q) { var s = st(q.id); return s && s.wrong > 0; })
+      .sort(function (a, b) { return st(b.id).wrong - st(a.id).wrong || weakness(b) - weakness(a); });
+    html += '<h2>Работа над ошибками</h2>';
+    if (!freq.length) html += '<div class="card muted">Здесь появятся вопросы, в которых ты ошибаешься чаще всего.</div>';
+    else {
+      html += '<div class="card"><p class="small muted">Чаще всего ошибаешься здесь:</p><ol class="errs">' + freq.slice(0, 10).map(function (q) {
+        var s = st(q.id); return '<li><span>' + esc(q.t) + '</span><b>' + s.wrong + ' ' + plural(s.wrong, 'ошибка', 'ошибки', 'ошибок') + '</b></li>';
+      }).join('') + '</ol>' + (weakList().length ? '<button class="btn full mt" data-act="weak">Начать раунд по ошибкам</button>' : '') + '</div>';
+    }
+    html += '<h2>Вся программа</h2><p class="small muted" style="margin-top:-4px">Темы до весны. Процент появляется, когда в тему добавлены вопросы.</p>';
     TOPICS.forEach(function (tp) {
-      var ts = topicStats(tp.id); if (!ts.total) return;
-      html += '<div class="card"><div class="row"><h3>' + esc(tp.name) + '</h3><span class="small">Ур. ' + ts.lvl + '/5</span></div><div class="bar"><i style="width:' + Math.round(ts.pct * 100) + '%"></i></div><div class="small muted mt">Выучено ' + ts.learned + ' из ' + ts.total + ' · начато ' + ts.seen + '</div></div>';
+      var ts = topicStats(tp.id);
+      if (!ts.total) { html += '<div class="card"><div class="row"><h3>' + esc(tp.name) + '</h3><span class="small muted">уточняется</span></div></div>'; return; }
+      html += '<div class="card"><div class="row"><h3>' + esc(tp.name) + '</h3><span class="small">' + Math.round(ts.pct * 100) + '%</span></div><div class="bar"><i style="width:' + Math.round(ts.pct * 100) + '%"></i></div><div class="small muted mt">Выучено ' + ts.learned + ' из ' + ts.total + ' · начато ' + ts.seen + ' · уровень ' + ts.lvl + ' из 5</div></div>';
     });
     html += '<h2>Достижения</h2><div class="achs">';
     ACH.forEach(function (a) { var got = S.ach[a.id]; html += '<div class="ach' + (got ? ' got' : '') + '"><span class="ic">' + a.ic + '</span><h3>' + esc(a.t) + '</h3><div class="small">' + (got ? 'Получено ' + shortD(got) : esc(a.d)) + '</div></div>'; });
@@ -689,6 +738,7 @@
     weak: function () { startRound('weak'); },
     topic: function (el) { startRound('plan', { topic: el.getAttribute('data-topic') }); },
     tag: function (el) { startRound('tag', { tag: el.getAttribute('data-tag') }); },
+    block: function (el) { var b = weekFocus()[+el.getAttribute('data-b')]; if (b) startRound('plan', blockScope(b)); },
     gotoweek: function () { weekIdx = null; setTab('week'); },
     quit: function () { if (R.res.filter(Boolean).length) return endRound(); R = null; document.body.classList.remove('in-round'); render(); },
     again: function () { var m = R.mode, f = R.f; R = null; startRound(m === 'free' ? 'plan' : m, f); },

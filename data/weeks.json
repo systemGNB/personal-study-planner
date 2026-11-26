@@ -1,111 +1,541 @@
 {
-  "weeks": [
+ "weeks": [
+  {
+   "id": "2026-11-30",
+   "start": "2026-11-30",
+   "end": "2026-12-06",
+   "title": "Теория SQL и аудит Olist",
+   "status": "Черновик — согласуем",
+   "goal": "Отвечать по памяти на вопросы о порядке выполнения запроса, WHERE и HAVING, типах JOIN и COUNT DISTINCT. Получить первые два файла кейса 1.",
+   "min": [
+    "Тренажёр: 5 раундов за неделю",
+    "SQL: 8 задач без подсказок на тренажёре (LeetCode Top SQL 50)",
+    "Olist: аудит данных — число строк, ключи, диапазон дат, статусы заказов → `01_data_audit.sql`",
+    "Olist: метрики по месяцам — заказы, GMV, AOV, уникальные покупатели → `02_monthly_metrics.sql`",
+    "Excel (1 день): те же метрики через СУММЕСЛИМН, СЧЁТЕСЛИМН и сводную таблицу, сверить с SQL"
+   ],
+   "max": [
+    "Ещё 5 задач Easy на LeetCode SQL 50",
+    "Записать в README кейса, какие месяцы Olist берёшь в анализ и почему"
+   ],
+   "check": [
+    "3 новые SQL-задачи на время, по 20 минут, без подсказок",
+    "Раунд тренажёра «Все темы»: 8 из 10 и выше",
+    "Продуктовая задача вслух на диктофон, 15 минут: GMV маркетплейса за неделю упал на 15%. Почему?"
+   ],
+   "focus": [
     {
-      "id": "2026-11-30", "start": "2026-11-30", "end": "2026-12-06",
-      "title": "Теория SQL и аудит Olist",
-      "status": "Черновик — согласуем",
-      "goal": "Отвечать по памяти на вопросы о порядке выполнения запроса, WHERE и HAVING, типах JOIN и COUNT DISTINCT. Получить первые два файла кейса 1.",
-      "min": [
-        "Тренажёр: 5 раундов за неделю",
-        "SQL: 8 задач без подсказок на тренажёре (sql-academy или LeetCode SQL 50)",
-        "Olist: аудит данных — число строк, ключи, диапазон дат, статусы заказов → `01_data_audit.sql`",
-        "Olist: метрики по месяцам — заказы, GMV, AOV, уникальные покупатели → `02_monthly_metrics.sql`",
-        "Excel (1 день): те же метрики через СУММЕСЛИМН, СЧЁТЕСЛИМН и сводную таблицу, сверить с SQL"
-      ],
-      "max": [
-        "Ещё 5 задач Easy на LeetCode SQL 50",
-        "Записать в README кейса, какие месяцы Olist берёшь в анализ и почему"
-      ],
-      "check": [
-        "3 новые SQL-задачи на время, по 20 минут, без подсказок",
-        "Раунд тренажёра «Все темы»: 8 из 10 и выше",
-        "Продуктовая задача вслух на диктофон, 15 минут: GMV маркетплейса за неделю упал на 15%. Почему?"
-      ]
+     "id": "w1-sql",
+     "name": "Теория SQL",
+     "style": "pink",
+     "ids": [
+      "sql-exec-order",
+      "sql-where-agg",
+      "sql-where-having",
+      "sql-alias-where",
+      "sql-inner-left",
+      "sql-full-join",
+      "sql-cross-join",
+      "sql-join-rows",
+      "sql-left-where",
+      "sql-count-variants",
+      "sql-null-eq",
+      "sql-avg-null",
+      "sql-coalesce",
+      "sql-union",
+      "sql-distinct-groupby",
+      "sql-case-when",
+      "sql-pk-fk",
+      "sql-check-steps",
+      "sql-f-aov",
+      "sql-f-left",
+      "sql-f-alias",
+      "sql-f-leftwhere",
+      "sql-f-null",
+      "sql-f-countstar",
+      "sql-f-groupby",
+      "sql-f-customerid",
+      "sql-p-unique",
+      "sql-p-having",
+      "sql-p-leftjoin"
+     ]
     },
     {
-      "id": "2026-12-07", "start": "2026-12-07", "end": "2026-12-13",
-      "title": "Оконные функции и повторные покупки",
-      "status": "Черновик — согласуем",
-      "goal": "Писать без подсказок ROW_NUMBER, RANK, DENSE_RANK, LAG и LEAD. Посчитать повторные покупки в Olist.",
-      "min": [
-        "Тренажёр: 5 раундов, хотя бы один — по теме SQL",
-        "SQL: 8 задач на оконные функции без подсказок",
-        "Olist: первый заказ каждого покупателя (ROW_NUMBER) и доля покупателей с повторной покупкой",
-        "Olist: дни между 1-м и 2-м заказом (LEAD), рост GMV месяц к месяцу (LAG) → `03_repeat_purchases.sql`",
-        "Excel (1 день): ВПР, ПРОСМОТРX и ИНДЕКС + ПОИСКПОЗ — подтянуть английские названия категорий из таблицы перевода"
-      ],
-      "max": [
-        "Olist: топ-3 категории по выручке в каждом штате (DENSE_RANK с PARTITION BY)",
-        "Прочитать 1 кейс из статей в тренажёре и ответить на его вопросы вслух"
-      ],
-      "check": [
-        "3 SQL-задачи на время, одна из них — на оконные функции",
-        "Раунд тренажёра по теме SQL: 8 из 10 и выше",
-        "Продуктовая задача вслух: маркетплейс ввёл бесплатную доставку от 200 R$. Как понять, окупилась ли она?"
-      ]
+     "id": "w1-money",
+     "name": "Метрики: аудитория и деньги",
+     "style": "lav",
+     "ids": [
+      "m-dau-def",
+      "m-mau-def",
+      "m-dau-sum",
+      "m-sticky-formula",
+      "m-sticky-calc",
+      "m-sticky-use",
+      "m-sessions-user",
+      "m-revenue-decomp",
+      "m-gmv-def",
+      "m-gmv-vs-rev",
+      "m-aov-formula",
+      "m-aov-calc",
+      "m-arpu-formula",
+      "m-arpu-calc",
+      "m-arppu-formula",
+      "m-arppu-calc",
+      "m-arpu-arppu-link",
+      "m-arpdau-formula",
+      "m-paying-formula",
+      "m-paying-calc"
+     ]
     },
     {
-      "id": "2026-12-14", "start": "2026-12-14", "end": "2026-12-20",
-      "title": "Когорты и retention",
-      "status": "Черновик — согласуем",
-      "goal": "Построить таблицу когорт в SQL и объяснить по памяти retention, rolling retention и churn с формулами.",
-      "min": [
-        "Тренажёр: 5 раундов, хотя бы один — по продуктовым метрикам",
-        "SQL: 6 задач без подсказок",
-        "Olist: таблица месячных когорт и retention месяца N → `04_cohorts.sql`",
-        "Olist: опоздание доставки и средняя оценка отзыва; покупают ли повторно те, у кого доставка опоздала → `05_delivery_reviews.sql`",
-        "Excel (1 день): тепловая карта когорт — Главная → Условное форматирование → Цветовые шкалы; функции ЕСЛИ, ЕСЛИОШИБКА, РАЗНДАТ"
-      ],
-      "max": [
-        "Сравнить классический и rolling retention на данных Olist и записать вывод в README",
-        "2 кейса из статей в тренажёре"
-      ],
-      "check": [
-        "3 SQL-задачи на время",
-        "10 формул метрик вслух: формула → пример с цифрами → где применяется",
-        "Продуктовая задача вслух: retention новых когорт падает три месяца подряд. Что проверить?"
-      ]
-    },
-    {
-      "id": "2026-12-21", "start": "2026-12-21", "end": "2026-12-27",
-      "title": "Дашборд в Power BI",
-      "status": "Черновик — согласуем",
-      "goal": "Собрать дашборд кейса 1 из трёх страниц с мерами DAX и срезами.",
-      "min": [
-        "Тренажёр: 5 раундов",
-        "PostgreSQL: представления (CREATE VIEW) для дашборда, подключение — Главная → Получить данные → База данных PostgreSQL",
-        "Страница «Обзор»: карточки GMV, заказы, AOV, покупатели и график по месяцам — всё через меры (SUM, DISTINCTCOUNT, DIVIDE)",
-        "Страница «Когорты»: матрица с условным форматированием",
-        "Страница «Доставка и отзывы» + срезы: период, штат, категория"
-      ],
-      "max": [
-        "Мера с CALCULATE: GMV только доставленных заказов",
-        "Сверить 3 числа дашборда с SQL"
-      ],
-      "check": [
-        "3 SQL-задачи на время",
-        "Раунд тренажёра «Все темы»: 8 из 10 и выше",
-        "Продуктовая задача вслух: после редизайна корзины конверсия в оплату упала с 4% до 3,2%. Что делать?"
-      ]
-    },
-    {
-      "id": "2026-12-28", "start": "2026-12-28", "end": "2027-01-03",
-      "title": "Выводы по кейсу 1 и пробный SQL",
-      "status": "Черновик — согласуем",
-      "goal": "Неделя короче из-за праздников: сформулировать выводы кейса 1 и пройти первое пробное собеседование по SQL.",
-      "min": [
-        "Тренажёр: 3 раунда",
-        "5 выводов по кейсу: факт с числом → что это значит для бизнеса → что предлагаю",
-        "Пробное собеседование по SQL с Claude: 45 минут, 3 задачи и 5 вопросов по теории",
-        "Разобрать ошибки пробного собеседования"
-      ],
-      "max": [
-        "Скриншоты дашборда и черновик README кейса 1 в GitHub"
-      ],
-      "check": [
-        "Раунд тренажёра «Все темы»: 8 из 10 и выше",
-        "Рассказать кейс 1 вслух за 3 минуты: задача → данные → 3 главных вывода"
-      ]
+     "id": "w1-excel",
+     "name": "Excel: функции с условиями",
+     "style": "ink",
+     "ids": [
+      "x-sumifs",
+      "x-countifs",
+      "x-sumif",
+      "x-sumifs-result",
+      "x-vlookup",
+      "x-name-countifs",
+      "x-vlookup-false",
+      "x-vlookup-limit",
+      "x-dollar",
+      "x-pivot-fields",
+      "x-pivot-distinct",
+      "x-vlookup-args",
+      "x-sumif-args",
+      "x-sumifs-args"
+     ]
     }
-  ]
+   ],
+   "links": [
+    {
+     "title": "LeetCode — Top SQL 50",
+     "url": "https://leetcode.com/studyplan/top-sql-50/",
+     "note": "Задачи с подсказками. Работает без VPN."
+    },
+    {
+     "title": "«Планета Excel» — приёмы и статьи",
+     "url": "https://www.planetaexcel.ru/techniques/",
+     "note": "Текст. Работает без VPN."
+    },
+    {
+     "title": "«Планета Excel» — YouTube-канал Николая Павлова",
+     "url": "https://www.youtube.com/@planetaexcel",
+     "note": "Видео. Нужен VPN."
+    }
+   ]
+  },
+  {
+   "id": "2026-12-07",
+   "start": "2026-12-07",
+   "end": "2026-12-13",
+   "title": "Оконные функции и повторные покупки",
+   "status": "Черновик — согласуем",
+   "goal": "Писать без подсказок ROW_NUMBER, RANK, DENSE_RANK, LAG и LEAD. Посчитать повторные покупки в Olist.",
+   "min": [
+    "Тренажёр: 5 раундов, хотя бы один — по теме SQL",
+    "SQL: 8 задач на оконные функции без подсказок",
+    "Olist: первый заказ каждого покупателя (ROW_NUMBER) и доля покупателей с повторной покупкой",
+    "Olist: дни между 1-м и 2-м заказом (LEAD), рост GMV месяц к месяцу (LAG) → `03_repeat_purchases.sql`",
+    "Excel (1 день): ВПР, ПРОСМОТРX и ИНДЕКС + ПОИСКПОЗ — подтянуть английские названия категорий из таблицы перевода"
+   ],
+   "max": [
+    "Olist: топ-3 категории по выручке в каждом штате (DENSE_RANK с PARTITION BY)",
+    "Прочитать 1 кейс из статей в тренажёре и ответить на его вопросы вслух"
+   ],
+   "check": [
+    "3 SQL-задачи на время, одна из них — на оконные функции",
+    "Раунд тренажёра по теме SQL: 8 из 10 и выше",
+    "Продуктовая задача вслух: маркетплейс ввёл бесплатную доставку от 200 R$. Как понять, окупилась ли она?"
+   ],
+   "focus": [
+    {
+     "id": "w2-window",
+     "name": "SQL: оконные функции и даты",
+     "style": "pink",
+     "ids": [
+      "sql-window-vs-group",
+      "sql-rank-calc",
+      "sql-dense-calc",
+      "sql-rownumber-use",
+      "sql-lag",
+      "sql-lead",
+      "sql-running-total",
+      "sql-f-partition",
+      "sql-p-first",
+      "sql-date-trunc",
+      "sql-extract-month",
+      "sql-p-month",
+      "sql-cte",
+      "sql-int-div",
+      "sql-f-intdiv",
+      "sql-p-share",
+      "sql-index"
+     ]
+    },
+    {
+     "id": "w2-retention",
+     "name": "Метрики: удержание и воронки",
+     "style": "lav",
+     "ids": [
+      "m-retention-formula",
+      "m-retention-calc",
+      "m-rolling-def",
+      "m-rolling-vs",
+      "m-churn-formula",
+      "m-churn-calc",
+      "m-churn-retention",
+      "m-lifetime-formula",
+      "m-lifetime-calc",
+      "m-activation-def",
+      "m-funnel-calc",
+      "m-funnel-def",
+      "m-funnel-through",
+      "m-repeat-formula",
+      "m-repeat-calc",
+      "m-frequency-formula",
+      "m-adoption-formula",
+      "m-kfactor-formula",
+      "m-kfactor-calc",
+      "m-kfactor-use"
+     ]
+    },
+    {
+     "id": "w2-excel",
+     "name": "Excel: поиск и текст",
+     "style": "ink",
+     "ids": [
+      "x-name-xlookup",
+      "x-index-match",
+      "x-match-zero",
+      "x-name-iferror",
+      "x-xlookup-args",
+      "x-if",
+      "x-if-args",
+      "x-name-averageif",
+      "x-name-datedif",
+      "x-name-concat",
+      "x-name-left",
+      "x-name-round",
+      "x-name-unique"
+     ]
+    }
+   ],
+   "links": [
+    {
+     "title": "LeetCode — Top SQL 50",
+     "url": "https://leetcode.com/studyplan/top-sql-50/",
+     "note": "Задачи с подсказками. Работает без VPN."
+    },
+    {
+     "title": "«Планета Excel» — приёмы и статьи",
+     "url": "https://www.planetaexcel.ru/techniques/",
+     "note": "Текст. Работает без VPN."
+    },
+    {
+     "title": "«Планета Excel» — YouTube-канал Николая Павлова",
+     "url": "https://www.youtube.com/@planetaexcel",
+     "note": "Видео. Нужен VPN."
+    }
+   ]
+  },
+  {
+   "id": "2026-12-14",
+   "start": "2026-12-14",
+   "end": "2026-12-20",
+   "title": "Когорты и retention",
+   "status": "Черновик — согласуем",
+   "goal": "Построить таблицу когорт в SQL и объяснить по памяти retention, rolling retention и churn с формулами.",
+   "min": [
+    "Тренажёр: 5 раундов, хотя бы один — по продуктовым метрикам",
+    "SQL: 6 задач без подсказок",
+    "Olist: таблица месячных когорт и retention месяца N → `04_cohorts.sql`",
+    "Olist: опоздание доставки и средняя оценка отзыва; покупают ли повторно те, у кого доставка опоздала → `05_delivery_reviews.sql`",
+    "Excel (1 день): тепловая карта когорт — Главная → Условное форматирование → Цветовые шкалы; функции ЕСЛИ, ЕСЛИОШИБКА, РАЗНДАТ"
+   ],
+   "max": [
+    "Сравнить классический и rolling retention на данных Olist и записать вывод в README",
+    "2 кейса из статей в тренажёре"
+   ],
+   "check": [
+    "3 SQL-задачи на время",
+    "10 формул метрик вслух: формула → пример с цифрами → где применяется",
+    "Продуктовая задача вслух: retention новых когорт падает три месяца подряд. Что проверить?"
+   ],
+   "focus": [
+    {
+     "id": "w3-cohorts",
+     "name": "Когорты и разбор падений",
+     "style": "outline",
+     "ids": [
+      "sql-cohort-steps",
+      "c-dau-first",
+      "c-dau-slices",
+      "c-drop-order",
+      "c-seasonality",
+      "c-aov-up-rev-down",
+      "c-cohort-retention",
+      "c-simpson",
+      "c-cart-redesign",
+      "c-nps-drop",
+      "c-orders-up-profit-down",
+      "c-courier-load"
+     ]
+    },
+    {
+     "id": "w3-marketing",
+     "name": "Маркетинговые метрики и юнит-экономика",
+     "style": "red",
+     "ids": [
+      "mk-cpm-formula",
+      "mk-cpm-calc",
+      "mk-cpc-formula",
+      "mk-cpc-calc",
+      "mk-ctr-formula",
+      "mk-ctr-calc",
+      "mk-cpm-cpc-ctr",
+      "mk-cr-formula",
+      "mk-cr-calc",
+      "mk-cpl-formula",
+      "mk-cpa-formula",
+      "mk-cpa-calc",
+      "mk-cpi-def",
+      "mk-cac-formula",
+      "mk-cac-calc",
+      "mk-cac-vs-cpa",
+      "mk-roi-formula",
+      "mk-romi-formula",
+      "mk-romi-calc",
+      "mk-roi-vs-romi",
+      "mk-roas-formula",
+      "mk-roas-calc",
+      "mk-roas-vs-romi",
+      "mk-drr-formula",
+      "mk-drr-calc",
+      "mk-drr-roas",
+      "mk-ltvcac-calc",
+      "mk-ltvcac-norm",
+      "mk-payback-formula",
+      "mk-payback-calc",
+      "mk-unit-formula",
+      "mk-unit-calc",
+      "mk-unit-def",
+      "mk-unit-order",
+      "mk-attr-last",
+      "mk-attr-first",
+      "mk-attr-linear",
+      "mk-funnel-order",
+      "mk-pick-romi"
+     ]
+    },
+    {
+     "id": "w3-ltv",
+     "name": "Метрики: LTV и маркетплейс",
+     "style": "lav",
+     "ids": [
+      "m-ltv-formula",
+      "m-ltv-calc",
+      "m-ltv-margin",
+      "m-ltv-margin-calc",
+      "m-takerate-formula",
+      "m-takerate-calc",
+      "m-cancel-formula",
+      "m-refund-formula"
+     ]
+    }
+   ],
+   "links": [
+    {
+     "title": "LeetCode — Top SQL 50",
+     "url": "https://leetcode.com/studyplan/top-sql-50/",
+     "note": "Задачи с подсказками. Работает без VPN."
+    },
+    {
+     "title": "«Планета Excel» — приёмы и статьи",
+     "url": "https://www.planetaexcel.ru/techniques/",
+     "note": "Текст. Работает без VPN."
+    }
+   ]
+  },
+  {
+   "id": "2026-12-21",
+   "start": "2026-12-21",
+   "end": "2026-12-27",
+   "title": "Дашборд в Power BI",
+   "status": "Черновик — согласуем",
+   "goal": "Собрать дашборд кейса 1 из трёх страниц с мерами DAX и срезами.",
+   "min": [
+    "Тренажёр: 5 раундов",
+    "PostgreSQL: представления (CREATE VIEW) для дашборда, подключение — Главная → Получить данные → База данных PostgreSQL",
+    "Страница «Обзор»: карточки GMV, заказы, AOV, покупатели и график по месяцам — всё через меры (SUM, DISTINCTCOUNT, DIVIDE)",
+    "Страница «Когорты»: матрица с условным форматированием",
+    "Страница «Доставка и отзывы» + срезы: период, штат, категория"
+   ],
+   "max": [
+    "Мера с CALCULATE: GMV только доставленных заказов",
+    "Сверить 3 числа дашборда с SQL"
+   ],
+   "check": [
+    "3 SQL-задачи на время",
+    "Раунд тренажёра «Все темы»: 8 из 10 и выше",
+    "Продуктовая задача вслух: после редизайна корзины конверсия в оплату упала с 4% до 3,2%. Что делать?"
+   ],
+   "focus": [
+    {
+     "id": "w4-stats",
+     "name": "Статистика: основы и критерии",
+     "style": "peri",
+     "ids": [
+      "s-mean-calc",
+      "s-median-calc",
+      "s-median-even",
+      "s-median-when",
+      "s-mode-def",
+      "s-var-def",
+      "s-std-def",
+      "s-outliers",
+      "s-rule-2sigma",
+      "s-clt",
+      "s-se-formula",
+      "s-se-calc",
+      "s-se-vs-std",
+      "s-h0-ab",
+      "s-pvalue-def",
+      "s-pvalue-pick",
+      "s-alpha-def",
+      "s-type1",
+      "s-type2",
+      "s-power",
+      "s-ci-def",
+      "s-ci-zero",
+      "s-test-conv",
+      "s-test-means",
+      "s-welch",
+      "s-mw",
+      "s-chi2",
+      "s-bootstrap",
+      "s-pearson-spearman",
+      "s-corr-cause"
+     ]
+    },
+    {
+     "id": "w4-cx",
+     "name": "Метрики: удовлетворённость и финтех",
+     "style": "lav",
+     "ids": [
+      "m-nps-promoters",
+      "m-nps-formula",
+      "m-nps-calc",
+      "m-csat-def",
+      "m-ces-def",
+      "m-approval-formula",
+      "m-default-def",
+      "m-approval-tradeoff",
+      "m-active-cards"
+     ]
+    },
+    {
+     "id": "w4-articles",
+     "name": "Кейсы из статей",
+     "style": "lav",
+     "ids": [
+      "art-samokat-metric",
+      "art-samokat-guard",
+      "art-samokat-offline",
+      "art-samokat-decision",
+      "art-otp-priority",
+      "art-otp-guardrail",
+      "art-otp-split",
+      "art-otp-drop",
+      "art-duo-why",
+      "art-duo-curr",
+      "art-duo-choose",
+      "art-duo-risk"
+     ]
+    }
+   ],
+   "links": [
+    {
+     "title": "«Курс Power BI» — iTempUniversity, 24 видео",
+     "url": "https://www.youtube.com/playlist?list=PL0FN8SpXya_KTfNuZNBmUQttvkSGmXiCM",
+     "note": "Видео. Нужен VPN."
+    },
+    {
+     "title": "LeetCode — Top SQL 50",
+     "url": "https://leetcode.com/studyplan/top-sql-50/",
+     "note": "Задачи с подсказками. Работает без VPN."
+    }
+   ]
+  },
+  {
+   "id": "2026-12-28",
+   "start": "2026-12-28",
+   "end": "2027-01-03",
+   "title": "Выводы по кейсу 1 и пробный SQL",
+   "status": "Черновик — согласуем",
+   "goal": "Неделя короче из-за праздников: сформулировать выводы кейса 1 и пройти первое пробное собеседование по SQL.",
+   "min": [
+    "Тренажёр: 3 раунда",
+    "5 выводов по кейсу: факт с числом → что это значит для бизнеса → что предлагаю",
+    "Пробное собеседование по SQL с Claude: 45 минут, 3 задачи и 5 вопросов по теории",
+    "Разобрать ошибки пробного собеседования"
+   ],
+   "max": [
+    "Скриншоты дашборда и черновик README кейса 1 в GitHub"
+   ],
+   "check": [
+    "Раунд тренажёра «Все темы»: 8 из 10 и выше",
+    "Рассказать кейс 1 вслух за 3 минуты: задача → данные → 3 главных вывода"
+   ],
+   "focus": [
+    {
+     "id": "w5-ab",
+     "name": "A/B-тесты",
+     "style": "peri",
+     "ids": [
+      "s-ab-order",
+      "s-metric-types",
+      "s-mde-def",
+      "s-sample-factors",
+      "s-mde-half",
+      "s-aa-test",
+      "s-srm",
+      "s-srm-check",
+      "s-peeking",
+      "s-multiple",
+      "s-bonferroni",
+      "s-novelty",
+      "s-cuped",
+      "s-ratio"
+     ]
+    },
+    {
+     "id": "w5-cases",
+     "name": "Продуктовые кейсы: оценка фич",
+     "style": "outline",
+     "ids": [
+      "c-before-after",
+      "c-repeat-button",
+      "c-discount-guardrails",
+      "c-dau-target",
+      "c-loyalty",
+      "c-feature-order",
+      "c-no-ab",
+      "c-active-cards",
+      "c-ai-assistant",
+      "c-edtech-reminders"
+     ]
+    }
+   ],
+   "links": [
+    {
+     "title": "LeetCode — Top SQL 50",
+     "url": "https://leetcode.com/studyplan/top-sql-50/",
+     "note": "Задачи с подсказками. Работает без VPN."
+    }
+   ]
+  }
+ ]
 }

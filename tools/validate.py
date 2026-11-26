@@ -107,6 +107,9 @@ def main():
         for w in weeks.get('weeks', []):
             if not (w.get('start') and w.get('end') and w['start'] <= w['end']):
                 errors.append(f'weeks.json [{w.get("id")}]: проверь start/end')
+            for l in w.get('links', []):
+                if not str(l.get('url', '')).startswith('https://'):
+                    errors.append(f'weeks.json [{w.get("id")}]: ссылка без https — {l.get("title")}')
     all_ids, by_topic, by_type = Counter(), Counter(), Counter()
     for rel in m.get('packs', []):
         pk = load(rel)
@@ -127,6 +130,16 @@ def main():
         if fix and changed:
             with open(os.path.join(DATA, rel), 'w', encoding='utf-8') as f:
                 json.dump(pk, f, ensure_ascii=False, indent=1)
+    if weeks:
+        for w in weeks.get('weeks', []):
+            for b in w.get('focus', []):
+                miss = [i for i in b.get('ids', []) if i not in all_ids]
+                if miss:
+                    errors.append(f'weeks.json [{w.get("id")}] блок «{b.get("name")}»: нет вопросов {miss[:5]}')
+        placed = {i for w in weeks.get('weeks', []) for b in w.get('focus', []) for i in b.get('ids', [])}
+        free = [i for i in all_ids if i not in placed]
+        if free:
+            warns.append(f'{len(free)} вопросов не распределены по неделям: {free[:8]}')
     for i, n in all_ids.items():
         if n > 1:
             errors.append(f'id «{i}» встречается {n} раза — в приложении останется только первый')
