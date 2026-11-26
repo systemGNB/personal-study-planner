@@ -1,0 +1,16 @@
+{
+ "version": "2026-11-26.9",
+ "topics": "topics.json",
+ "config": "config.json",
+ "weeks": "weeks.json",
+ "changelog": "changelog.json",
+ "packs": [
+  "bank/metrics-base.json",
+  "bank/marketing-base.json",
+  "bank/stats-base.json",
+  "bank/sql-base.json",
+  "bank/excel-base.json",
+  "bank/cases-base.json",
+  "bank/articles-2026-11.json"
+ ]
+}

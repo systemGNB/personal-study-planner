@@ -1,0 +1,40 @@
+{
+ "topics": [
+  {
+   "id": "metrics",
+   "name": "Продуктовые метрики",
+   "style": "lav"
+  },
+  {
+   "id": "marketing",
+   "name": "Маркетинговые метрики",
+   "style": "red"
+  },
+  {
+   "id": "stats",
+   "name": "Статистика и A/B",
+   "style": "peri"
+  },
+  {
+   "id": "sql",
+   "name": "SQL",
+   "style": "pink"
+  },
+  {
+   "id": "excel",
+   "name": "Excel",
+   "style": "ink"
+  },
+  {
+   "id": "cases",
+   "name": "Продуктовые кейсы",
+   "style": "outline"
+  },
+  {
+   "id": "articles",
+   "name": "Кейсы из статей",
+   "style": "lav",
+   "wide": true
+  }
+ ]
+}

@@ -1,0 +1,741 @@
+{
+ "pack": "sql-base",
+ "title": "SQL: базовый набор",
+ "added": "2026-11-26",
+ "questions": [
+  {
+   "id": "sql-exec-order",
+   "topic": "sql",
+   "type": "order",
+   "t": "Порядок выполнения запроса",
+   "q": "Расставь части запроса в порядке выполнения.",
+   "items": [
+    "FROM / JOIN",
+    "WHERE",
+    "GROUP BY",
+    "HAVING",
+    "SELECT",
+    "ORDER BY",
+    "LIMIT"
+   ],
+   "a": "Поэтому псевдоним из SELECT нельзя использовать в WHERE, а в ORDER BY можно."
+  },
+  {
+   "id": "sql-where-agg",
+   "topic": "sql",
+   "type": "input",
+   "t": "Почему агрегат не в WHERE",
+   "q": "Почему в WHERE нельзя фильтровать по COUNT(*)?",
+   "check": "self",
+   "a": "WHERE выполняется до GROUP BY, агрегатов в этот момент ещё нет. Фильтр по агрегату пишут в HAVING."
+  },
+  {
+   "id": "sql-where-having",
+   "topic": "sql",
+   "type": "input",
+   "t": "WHERE vs HAVING",
+   "q": "Чем WHERE отличается от HAVING?",
+   "check": "self",
+   "a": "WHERE фильтрует строки до группировки, HAVING — группы после агрегации."
+  },
+  {
+   "id": "sql-alias-where",
+   "topic": "sql",
+   "type": "input",
+   "t": "Псевдоним в WHERE",
+   "q": "Можно ли использовать в WHERE псевдоним, заданный в SELECT? Почему?",
+   "check": "self",
+   "a": "Нет: WHERE выполняется раньше SELECT, псевдонима ещё не существует. Нужно повторить выражение или вынести расчёт в подзапрос / CTE."
+  },
+  {
+   "id": "sql-inner-left",
+   "topic": "sql",
+   "type": "input",
+   "t": "INNER vs LEFT JOIN",
+   "q": "Чем INNER JOIN отличается от LEFT JOIN?",
+   "check": "self",
+   "a": "INNER оставляет только строки с совпадением в обеих таблицах. LEFT оставляет все строки левой таблицы; где совпадения нет, поля правой — NULL."
+  },
+  {
+   "id": "sql-full-join",
+   "topic": "sql",
+   "type": "input",
+   "t": "FULL JOIN",
+   "q": "Что вернёт FULL OUTER JOIN?",
+   "check": "self",
+   "a": "Все строки обеих таблиц: совпавшие соединены, у несовпавших поля другой таблицы — NULL."
+  },
+  {
+   "id": "sql-cross-join",
+   "topic": "sql",
+   "type": "input",
+   "t": "CROSS JOIN",
+   "q": "Что делает CROSS JOIN и сколько строк он вернёт для таблиц из 10 и 20 строк?",
+   "check": "self",
+   "a": "Декартово произведение: каждая строка с каждой. 10 × 20 = 200 строк."
+  },
+  {
+   "id": "sql-join-rows",
+   "topic": "sql",
+   "type": "input",
+   "t": "Сколько строк после JOIN",
+   "q": "В orders 100 заказов, у каждого ровно 3 строки в order_items. Сколько строк вернёт orders JOIN order_items?",
+   "check": "auto",
+   "accept": [
+    "300"
+   ],
+   "a": "100 × 3 = 300. Поэтому после JOIN с таблицей «многие» нужно COUNT(DISTINCT order_id), а не COUNT(*)."
+  },
+  {
+   "id": "sql-left-where",
+   "topic": "sql",
+   "type": "input",
+   "t": "LEFT JOIN и WHERE",
+   "q": "Почему условие на правую таблицу в WHERE после LEFT JOIN превращает его во INNER JOIN?",
+   "check": "self",
+   "a": "У строк без совпадения поля правой таблицы — NULL, и условие в WHERE их отбрасывает. Условие нужно перенести в ON."
+  },
+  {
+   "id": "sql-count-variants",
+   "topic": "sql",
+   "type": "input",
+   "t": "COUNT(*) vs COUNT(поле)",
+   "q": "Чем COUNT(*) отличается от COUNT(column) и COUNT(DISTINCT column)?",
+   "check": "self",
+   "a": "COUNT(*) считает все строки. COUNT(column) — строки, где column не NULL. COUNT(DISTINCT column) — уникальные не-NULL значения."
+  },
+  {
+   "id": "sql-null-eq",
+   "topic": "sql",
+   "type": "input",
+   "t": "Сравнение с NULL",
+   "q": "Почему WHERE column = NULL не находит строки с NULL?",
+   "check": "self",
+   "a": "Любое сравнение с NULL даёт неизвестность (не TRUE). Нужно писать column IS NULL."
+  },
+  {
+   "id": "sql-avg-null",
+   "topic": "sql",
+   "type": "input",
+   "t": "AVG и NULL",
+   "q": "Как AVG обрабатывает NULL?",
+   "check": "self",
+   "a": "Пропускает их: делит сумму на число не-NULL значений. Если NULL означает 0, сначала нужно COALESCE(column, 0)."
+  },
+  {
+   "id": "sql-coalesce",
+   "topic": "sql",
+   "type": "input",
+   "t": "COALESCE",
+   "q": "Что делает COALESCE(a, b, c)?",
+   "check": "self",
+   "a": "Возвращает первое не-NULL значение из списка."
+  },
+  {
+   "id": "sql-union",
+   "topic": "sql",
+   "type": "input",
+   "t": "UNION vs UNION ALL",
+   "q": "Чем UNION отличается от UNION ALL?",
+   "check": "self",
+   "a": "UNION убирает дубликаты (и работает медленнее), UNION ALL оставляет все строки."
+  },
+  {
+   "id": "sql-distinct-groupby",
+   "topic": "sql",
+   "type": "input",
+   "t": "DISTINCT vs GROUP BY",
+   "q": "Когда нужен GROUP BY, а DISTINCT не подойдёт?",
+   "check": "self",
+   "a": "Когда для уникальных значений нужно посчитать агрегаты (COUNT, SUM). DISTINCT только убирает дубликаты."
+  },
+  {
+   "id": "sql-case-when",
+   "topic": "sql",
+   "type": "input",
+   "t": "CASE WHEN",
+   "q": "Как с помощью CASE WHEN посчитать число доставленных заказов в одном запросе со всеми заказами?",
+   "check": "self",
+   "a": "`SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END)` или `COUNT(CASE WHEN status = 'delivered' THEN 1 END)`."
+  },
+  {
+   "id": "sql-cte",
+   "topic": "sql",
+   "type": "input",
+   "t": "CTE",
+   "q": "Что такое CTE и зачем она нужна?",
+   "check": "self",
+   "a": "Именованный подзапрос в WITH … AS (…) перед основным запросом. Делает сложный запрос читаемым по шагам и позволяет сослаться на результат несколько раз."
+  },
+  {
+   "id": "sql-date-trunc",
+   "topic": "sql",
+   "type": "input",
+   "t": "DATE_TRUNC",
+   "q": "Что вернёт DATE_TRUNC('month', '2018-03-17 14:05')?",
+   "check": "self",
+   "a": "2018-03-01 00:00 — начало месяца."
+  },
+  {
+   "id": "sql-extract-month",
+   "topic": "sql",
+   "type": "input",
+   "t": "EXTRACT(MONTH) для динамики",
+   "q": "Почему для динамики по месяцам за несколько лет нельзя группировать по EXTRACT(MONTH FROM date)?",
+   "check": "self",
+   "a": "EXTRACT возвращает только номер месяца: март 2017 и март 2018 сольются в одну группу. Нужен DATE_TRUNC('month', date)."
+  },
+  {
+   "id": "sql-int-div",
+   "topic": "sql",
+   "type": "input",
+   "t": "Целочисленное деление",
+   "q": "Почему в PostgreSQL 3 / 4 даёт 0 и как получить 0,75?",
+   "check": "self",
+   "a": "Деление целых чисел даёт целое. Нужно привести одно из чисел: 3::numeric / 4 или 3 * 1.0 / 4."
+  },
+  {
+   "id": "sql-pk-fk",
+   "topic": "sql",
+   "type": "input",
+   "t": "Первичный и внешний ключ",
+   "q": "Чем первичный ключ отличается от внешнего?",
+   "check": "self",
+   "a": "Первичный ключ уникально определяет строку своей таблицы. Внешний ключ ссылается на первичный ключ другой таблицы и задаёт связь."
+  },
+  {
+   "id": "sql-index",
+   "topic": "sql",
+   "type": "input",
+   "t": "Индекс",
+   "q": "Зачем нужен индекс в таблице?",
+   "check": "self",
+   "a": "Ускоряет поиск и фильтрацию по столбцу. Цена — место на диске и более медленные вставки."
+  },
+  {
+   "id": "sql-window-vs-group",
+   "topic": "sql",
+   "type": "input",
+   "t": "Оконная функция vs GROUP BY",
+   "q": "Чем оконная функция отличается от GROUP BY?",
+   "check": "self",
+   "a": "GROUP BY сворачивает строки в одну на группу. Оконная функция считает по группе (PARTITION BY), но сохраняет все строки."
+  },
+  {
+   "id": "sql-rank-calc",
+   "topic": "sql",
+   "type": "input",
+   "t": "RANK и DENSE_RANK",
+   "q": "Суммы: 100, 100, 90 (по убыванию). Какой RANK у 90?",
+   "check": "auto",
+   "accept": [
+    "3"
+   ],
+   "a": "RANK: 1, 1, 3 — после равных пропускает номер. DENSE_RANK: 1, 1, 2. ROW_NUMBER: 1, 2, 3."
+  },
+  {
+   "id": "sql-dense-calc",
+   "topic": "sql",
+   "type": "input",
+   "t": "DENSE_RANK",
+   "q": "Суммы: 100, 100, 90 (по убыванию). Какой DENSE_RANK у 90?",
+   "check": "auto",
+   "accept": [
+    "2"
+   ],
+   "a": "DENSE_RANK не пропускает номера: 1, 1, 2."
+  },
+  {
+   "id": "sql-rownumber-use",
+   "topic": "sql",
+   "type": "input",
+   "t": "ROW_NUMBER — применение",
+   "q": "Как с помощью ROW_NUMBER найти первый заказ каждого покупателя?",
+   "check": "self",
+   "a": "ROW_NUMBER() OVER (PARTITION BY customer_unique_id ORDER BY order_purchase_timestamp) AS rn, затем во внешнем запросе WHERE rn = 1."
+  },
+  {
+   "id": "sql-lag",
+   "topic": "sql",
+   "type": "input",
+   "t": "LAG",
+   "q": "Что делает LAG(revenue) OVER (ORDER BY month)?",
+   "check": "self",
+   "a": "Возвращает значение revenue из предыдущей строки (предыдущего месяца). Так считают изменение месяц к месяцу."
+  },
+  {
+   "id": "sql-lead",
+   "topic": "sql",
+   "type": "input",
+   "t": "LEAD",
+   "q": "Чем LEAD отличается от LAG?",
+   "check": "self",
+   "a": "LEAD берёт значение из следующей строки, LAG — из предыдущей."
+  },
+  {
+   "id": "sql-running-total",
+   "topic": "sql",
+   "type": "input",
+   "t": "Накопительный итог",
+   "q": "Как посчитать накопительную выручку по дням?",
+   "check": "self",
+   "a": "SUM(revenue) OVER (ORDER BY day) — сумма от первой строки до текущей."
+  },
+  {
+   "id": "sql-cohort-steps",
+   "topic": "sql",
+   "type": "order",
+   "t": "Шаги расчёта когорт",
+   "q": "Расставь шаги расчёта retention по месячным когортам.",
+   "items": [
+    "Найти месяц первой покупки каждого покупателя (CTE)",
+    "Для каждого заказа посчитать номер месяца от первой покупки",
+    "Посчитать уникальных покупателей по когорте и номеру месяца",
+    "Разделить на размер когорты (месяц 0)"
+   ]
+  },
+  {
+   "id": "sql-check-steps",
+   "topic": "sql",
+   "type": "order",
+   "t": "Проверка результата запроса",
+   "q": "Расставь шаги проверки результата SQL-запроса.",
+   "items": [
+    "Сравнить число строк до и после JOIN",
+    "Проверить, где нужен COUNT DISTINCT",
+    "Проверить NULL в ключах и условиях",
+    "Сверить итог со здравым смыслом (порядок чисел, доли)"
+   ]
+  },
+  {
+   "id": "sql-f-aov",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: AOV после JOIN с оплатами",
+   "q": "Задача: средний чек (AOV) по месяцам в Olist. Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "DATE_TRUNC('month', o.order_purchase_timestamp) AS month,"
+    ],
+    [
+     "SUM(p.payment_value)",
+     "/",
+     "COUNT(o.order_id)",
+     "AS aov"
+    ],
+    [
+     "FROM orders o"
+    ],
+    [
+     "JOIN order_payments p",
+     "ON o.order_id = p.order_id"
+    ],
+    [
+     "GROUP BY 1;"
+    ]
+   ],
+   "err": [
+    [
+     1,
+     2
+    ]
+   ],
+   "a": "У заказа в order_payments может быть несколько строк (рассрочка, несколько способов оплаты). После JOIN `COUNT(o.order_id)` считает строки оплат и занижает AOV.\nИсправление: `COUNT(DISTINCT o.order_id)`."
+  },
+  {
+   "id": "sql-f-left",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: продавцы без продаж",
+   "q": "Задача: для каждого продавца — число проданных позиций, включая продавцов без продаж. Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "s.seller_id,",
+     "COUNT(oi.order_item_id) AS items"
+    ],
+    [
+     "FROM sellers s"
+    ],
+    [
+     "JOIN order_items oi",
+     "ON s.seller_id = oi.seller_id"
+    ],
+    [
+     "GROUP BY s.seller_id;"
+    ]
+   ],
+   "err": [
+    [
+     2,
+     0
+    ]
+   ],
+   "a": "INNER JOIN оставит только продавцов с продажами.\nИсправление: `LEFT JOIN order_items oi`. Тогда у продавцов без продаж будет 0: COUNT по столбцу не считает NULL."
+  },
+  {
+   "id": "sql-f-intdiv",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: доля доставленных = 0",
+   "q": "Задача: доля доставленных заказов. Запрос возвращает 0. Найди ошибку.",
+   "code": [
+    [
+     "SELECT"
+    ],
+    [
+     "COUNT(CASE WHEN order_status = 'delivered' THEN 1 END)",
+     "/",
+     "COUNT(*)",
+     "AS share"
+    ],
+    [
+     "FROM orders;"
+    ]
+   ],
+   "err": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     0
+    ]
+   ],
+   "a": "Деление целого на целое в PostgreSQL даёт целое, доля округляется до 0.\nИсправление: привести к numeric — `COUNT(…)::numeric / COUNT(*)`."
+  },
+  {
+   "id": "sql-f-alias",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: псевдоним в WHERE",
+   "q": "Задача: заказы со стоимостью доставки больше 20% цены товара. Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "order_id,",
+     "freight_value / price AS freight_share"
+    ],
+    [
+     "FROM order_items"
+    ],
+    [
+     "WHERE",
+     "freight_share > 0.2;"
+    ]
+   ],
+   "err": [
+    [
+     2,
+     1
+    ]
+   ],
+   "a": "WHERE выполняется до SELECT, псевдонима freight_share ещё нет — запрос упадёт.\nИсправление: `WHERE freight_value / price > 0.2`."
+  },
+  {
+   "id": "sql-f-leftwhere",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: LEFT JOIN стал INNER",
+   "q": "Задача: все заказы и оценка отзыва, если отзыв есть и оценка 5. Остальные заказы — с NULL. Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "o.order_id,",
+     "r.review_score"
+    ],
+    [
+     "FROM orders o"
+    ],
+    [
+     "LEFT JOIN order_reviews r",
+     "ON o.order_id = r.order_id"
+    ],
+    [
+     "WHERE",
+     "r.review_score = 5;"
+    ]
+   ],
+   "err": [
+    [
+     3,
+     1
+    ]
+   ],
+   "a": "Условие на правую таблицу в WHERE отбрасывает строки с NULL — заказы без отзыва пропадут.\nИсправление: перенести условие в ON: `ON o.order_id = r.order_id AND r.review_score = 5`."
+  },
+  {
+   "id": "sql-f-null",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: сравнение с NULL",
+   "q": "Задача: заказы, которые ещё не доставлены (нет даты доставки). Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "order_id"
+    ],
+    [
+     "FROM orders"
+    ],
+    [
+     "WHERE",
+     "order_delivered_customer_date = NULL;"
+    ]
+   ],
+   "err": [
+    [
+     2,
+     1
+    ]
+   ],
+   "a": "Сравнение с NULL через = никогда не даёт TRUE, запрос вернёт 0 строк.\nИсправление: `WHERE order_delivered_customer_date IS NULL`."
+  },
+  {
+   "id": "sql-f-countstar",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: COUNT(*) после LEFT JOIN",
+   "q": "Задача: число отзывов у каждого заказа, включая заказы без отзывов (у них должен быть 0). Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "o.order_id,",
+     "COUNT(*) AS reviews"
+    ],
+    [
+     "FROM orders o"
+    ],
+    [
+     "LEFT JOIN order_reviews r",
+     "ON o.order_id = r.order_id"
+    ],
+    [
+     "GROUP BY o.order_id;"
+    ]
+   ],
+   "err": [
+    [
+     0,
+     2
+    ]
+   ],
+   "a": "После LEFT JOIN у заказа без отзыва остаётся одна строка с NULL, и COUNT(*) посчитает её как 1.\nИсправление: `COUNT(r.review_id)`."
+  },
+  {
+   "id": "sql-f-groupby",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: столбец вне GROUP BY",
+   "q": "Задача: выручка по штатам и городам покупателей. Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "c.customer_state,",
+     "c.customer_city,",
+     "SUM(p.payment_value)"
+    ],
+    [
+     "FROM orders o"
+    ],
+    [
+     "JOIN customers c",
+     "ON o.customer_id = c.customer_id"
+    ],
+    [
+     "JOIN order_payments p",
+     "ON o.order_id = p.order_id"
+    ],
+    [
+     "GROUP BY",
+     "c.customer_state;"
+    ]
+   ],
+   "err": [
+    [
+     4,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "a": "customer_city есть в SELECT, но не в GROUP BY и не внутри агрегата — запрос упадёт.\nИсправление: `GROUP BY c.customer_state, c.customer_city`."
+  },
+  {
+   "id": "sql-f-partition",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: первый заказ покупателя",
+   "q": "Задача: первый заказ каждого покупателя. Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "*"
+    ],
+    [
+     "FROM ("
+    ],
+    [
+     "SELECT",
+     "o.order_id,",
+     "c.customer_unique_id,"
+    ],
+    [
+     "ROW_NUMBER() OVER (ORDER BY o.order_purchase_timestamp)",
+     "AS rn"
+    ],
+    [
+     "FROM orders o",
+     "JOIN customers c ON o.customer_id = c.customer_id"
+    ],
+    [
+     ") t"
+    ],
+    [
+     "WHERE",
+     "rn = 1;"
+    ]
+   ],
+   "err": [
+    [
+     3,
+     0
+    ]
+   ],
+   "a": "Без PARTITION BY нумерация идёт по всем заказам сразу, и rn = 1 будет только у самого первого заказа в базе.\nИсправление: `ROW_NUMBER() OVER (PARTITION BY c.customer_unique_id ORDER BY o.order_purchase_timestamp)`."
+  },
+  {
+   "id": "sql-f-customerid",
+   "topic": "sql",
+   "type": "find",
+   "t": "Найди ошибку: повторные покупатели Olist",
+   "q": "Задача: число покупателей Olist, сделавших больше одного заказа. Найди ошибку.",
+   "code": [
+    [
+     "SELECT",
+     "COUNT(*)"
+    ],
+    [
+     "FROM ("
+    ],
+    [
+     "SELECT",
+     "customer_id"
+    ],
+    [
+     "FROM orders"
+    ],
+    [
+     "GROUP BY",
+     "customer_id"
+    ],
+    [
+     "HAVING",
+     "COUNT(*) > 1"
+    ],
+    [
+     ") t;"
+    ]
+   ],
+   "err": [
+    [
+     4,
+     1
+    ],
+    [
+     2,
+     1
+    ]
+   ],
+   "a": "В Olist у покупателя новый customer_id в каждом заказе, поэтому запрос вернёт 0.\nИсправление: соединить с customers и группировать по `customer_unique_id`."
+  },
+  {
+   "id": "sql-p-unique",
+   "topic": "sql",
+   "type": "pick",
+   "t": "Какой запрос неправильный: уникальные покупатели",
+   "q": "Задача: число уникальных покупателей Olist по штатам. Какой запрос неправильный?",
+   "options": [
+    "SELECT customer_state,\n       COUNT(DISTINCT customer_unique_id) AS buyers\nFROM customers\nGROUP BY customer_state;",
+    "SELECT c.customer_state,\n       COUNT(DISTINCT c.customer_unique_id) AS buyers\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nGROUP BY c.customer_state;",
+    "SELECT c.customer_state,\n       COUNT(c.customer_id) AS buyers\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nGROUP BY c.customer_state;"
+   ],
+   "wrong": 2,
+   "a": "В Olist у покупателя новый customer_id в каждом заказе, поэтому C считает заказы, а не людей. A и B дают одинаковый верный результат."
+  },
+  {
+   "id": "sql-p-having",
+   "topic": "sql",
+   "type": "pick",
+   "t": "Какой запрос неправильный: фильтр по числу заказов",
+   "q": "Задача: категории, в которых больше 1 000 заказов. Какой запрос неправильный?",
+   "options": [
+    "SELECT p.product_category_name,\n       COUNT(DISTINCT oi.order_id) AS orders\nFROM order_items oi\nJOIN products p ON oi.product_id = p.product_id\nGROUP BY p.product_category_name\nHAVING COUNT(DISTINCT oi.order_id) > 1000;",
+    "SELECT p.product_category_name,\n       COUNT(DISTINCT oi.order_id) AS orders\nFROM order_items oi\nJOIN products p ON oi.product_id = p.product_id\nWHERE COUNT(DISTINCT oi.order_id) > 1000\nGROUP BY p.product_category_name;",
+    "SELECT *\nFROM (\n  SELECT p.product_category_name,\n         COUNT(DISTINCT oi.order_id) AS orders\n  FROM order_items oi\n  JOIN products p ON oi.product_id = p.product_id\n  GROUP BY p.product_category_name\n) t\nWHERE orders > 1000;"
+   ],
+   "wrong": 1,
+   "a": "В B агрегат стоит в WHERE — запрос упадёт. В A фильтр в HAVING, в C — во внешнем запросе после группировки."
+  },
+  {
+   "id": "sql-p-month",
+   "topic": "sql",
+   "type": "pick",
+   "t": "Какой запрос неправильный: GMV по месяцам",
+   "q": "Задача: GMV по месяцам за 2017–2018 годы. Какой запрос неправильный?",
+   "options": [
+    "SELECT DATE_TRUNC('month', o.order_purchase_timestamp) AS month,\n       SUM(oi.price) AS gmv\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nGROUP BY 1\nORDER BY 1;",
+    "SELECT EXTRACT(MONTH FROM o.order_purchase_timestamp) AS month,\n       SUM(oi.price) AS gmv\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nGROUP BY 1\nORDER BY 1;",
+    "SELECT TO_CHAR(o.order_purchase_timestamp, 'YYYY-MM') AS month,\n       SUM(oi.price) AS gmv\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nGROUP BY 1\nORDER BY 1;"
+   ],
+   "wrong": 1,
+   "a": "EXTRACT(MONTH) возвращает только номер месяца: март 2017 и март 2018 попадут в одну строку. A и C разделяют годы."
+  },
+  {
+   "id": "sql-p-share",
+   "topic": "sql",
+   "type": "pick",
+   "t": "Какой запрос неправильный: доля отмен",
+   "q": "Задача: доля отменённых заказов. Какой запрос неправильный?",
+   "options": [
+    "SELECT AVG(CASE WHEN order_status = 'canceled' THEN 1.0 ELSE 0 END)\nFROM orders;",
+    "SELECT COUNT(*) FILTER (WHERE order_status = 'canceled')::numeric\n       / COUNT(*)\nFROM orders;",
+    "SELECT COUNT(CASE WHEN order_status = 'canceled' THEN 1 END)\n       / COUNT(*)\nFROM orders;"
+   ],
+   "wrong": 2,
+   "a": "В C делятся два целых числа — результат округлится до 0. В A среднее от 1.0/0 даёт долю, в B числитель приведён к numeric."
+  },
+  {
+   "id": "sql-p-first",
+   "topic": "sql",
+   "type": "pick",
+   "t": "Какой запрос неправильный: дата первой покупки",
+   "q": "Задача: дата первой покупки каждого покупателя Olist. Какой запрос неправильный?",
+   "options": [
+    "SELECT c.customer_unique_id,\n       MIN(o.order_purchase_timestamp) AS first_order\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nGROUP BY c.customer_unique_id;",
+    "SELECT customer_unique_id, order_purchase_timestamp\nFROM (\n  SELECT c.customer_unique_id, o.order_purchase_timestamp,\n         ROW_NUMBER() OVER (PARTITION BY c.customer_unique_id\n                            ORDER BY o.order_purchase_timestamp) AS rn\n  FROM orders o\n  JOIN customers c ON o.customer_id = c.customer_id\n) t\nWHERE rn = 1;",
+    "SELECT c.customer_unique_id,\n       MAX(o.order_purchase_timestamp) AS first_order\nFROM orders o\nJOIN customers c ON o.customer_id = c.customer_id\nGROUP BY c.customer_unique_id;"
+   ],
+   "wrong": 2,
+   "a": "MAX вернёт дату последней покупки, а не первой. A и B дают первую покупку."
+  },
+  {
+   "id": "sql-p-leftjoin",
+   "topic": "sql",
+   "type": "pick",
+   "t": "Какой запрос неправильный: заказы без отзывов",
+   "q": "Задача: число заказов без отзыва. Какой запрос неправильный?",
+   "options": [
+    "SELECT COUNT(*)\nFROM orders o\nLEFT JOIN order_reviews r ON o.order_id = r.order_id\nWHERE r.order_id IS NULL;",
+    "SELECT COUNT(*)\nFROM orders o\nWHERE NOT EXISTS (\n  SELECT 1 FROM order_reviews r WHERE r.order_id = o.order_id\n);",
+    "SELECT COUNT(*)\nFROM orders o\nJOIN order_reviews r ON o.order_id = r.order_id\nWHERE r.order_id IS NULL;"
+   ],
+   "wrong": 2,
+   "a": "INNER JOIN оставляет только заказы с отзывом, поэтому условие IS NULL не найдёт ни одной строки — результат 0. A и B верны."
+  }
+ ]
+}
