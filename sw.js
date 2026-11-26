@@ -1,9 +1,9 @@
 /* Офлайн-режим.
  * Оболочка и данные кэшируются при установке (данные — по списку из data/manifest.json).
- * Данные и код запрашиваются сначала из сети, без сети — из кэша. Новые файлы из манифеста подхватываются сами.
+ * Все файлы запрашиваются сначала из сети, без сети — из кэша. Новые файлы из манифеста подхватываются сами.
  * После изменения app.js / styles.css / index.html достаточно поменять CACHE, чтобы сбросить старый кэш. */
-var CACHE = 'trainer-v11';
-var SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest',
+var CACHE = 'trainer-v12';
+var SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest?v=2',
   'icons/icon-192-v2.png', 'icons/icon-512-v2.png', 'icons/apple-touch-icon-v2.png', 'data/manifest.json'];
 
 function dataFiles() {
@@ -28,13 +28,11 @@ self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
   var url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
-  var networkFirst = url.pathname.indexOf('/data/') >= 0 || /\/(app\.js|styles\.css|index\.html)?$/.test(url.pathname);
-  if (networkFirst) {
+  // всё — сначала из сети (свежие файлы, иконки, манифест), без сети — из кэша
+  if (true) {
     e.respondWith(fetch(e.request).then(function (res) {
       if (res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); }
       return res;
     }).catch(function () { return caches.match(e.request, { ignoreSearch: true }); }));
-  } else {
-    e.respondWith(caches.match(e.request).then(function (hit) { return hit || fetch(e.request); }));
   }
 });
