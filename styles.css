@@ -458,3 +458,5 @@ body.in-round .pill{align-self:flex-start}
 body.in-round .qbox>textarea#answer{flex:1 1 auto;min-height:120px;max-height:42vh}
 .tile .lvl{white-space:nowrap;padding-right:24px}
 @media (max-width:379px){ .tile .lvl{font-size:12.5px} .tile{padding:14px} }
+ol.errs{padding-left:28px}
+.hero p{max-width:calc(100% - 100px)}

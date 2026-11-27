@@ -180,6 +180,13 @@
       .sort(function (a, b) { return weakness(b) - weakness(a) || (st(b.id).wrong - st(a.id).wrong); });
   }
 
+  // Работа над ошибками = «Не помню» + ошибки; сначала «Не помню», затем самые слабые
+  function fixList(f) {
+    var dk = dkList().filter(function (q) { return inScope(q, f); }).sort(function (a, b) { return st(b.id).dk - st(a.id).dk; });
+    var seen = setOf(dk.map(function (q) { return q.id; }));
+    return dk.concat(weakList(f).filter(function (q) { return !seen[q.id]; }));
+  }
+
   function grade(q, g, mode) {
     var t = today(), s = st(q.id), isNew = !s, I = CFG.intervals;
     if (!s) s = S.q[q.id] = { box: 0, due: t, right: 0, wrong: 0, partial: 0 };
@@ -250,7 +257,7 @@
 
   // ответ целиком, если нажато «Не помню»
   function dkView(q) {
-    var h = '<div class="ans dkmark"><div class="lbl">Не помню · вопрос добавлен в раздел «Не помню»</div></div>', L = 'ABCDEF';
+    var h = '<div class="ans dkmark"><div class="lbl">Не помню · вопрос добавлен в «Работу над ошибками»</div></div>', L = 'ABCDEF';
     if (q.type === 'input') h += answerBox(q.a, 'Ответ');
     else if (q.type === 'order') h += '<div class="ans"><div class="lbl">Правильный порядок</div><ol class="rightorder">' + q.items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div>' + (q.a ? answerBox(q.a, 'Пояснение') : '');
     else if (q.type === 'find') {
@@ -486,7 +493,7 @@
   }
 
   function renderHome() {
-    var t = today(), d = parse(t), due = dueList().filter(dailyOk).length, nl = Math.min(newLeft(), newList(weekScope()).filter(dailyOk).length), sk = streak(), weak = weakList().length, dk = dkList().length, cs = casesAvailable();
+    var t = today(), d = parse(t), due = dueList().filter(dailyOk).length, nl = Math.min(newLeft(), newList(weekScope()).filter(dailyOk).length), sk = streak(), weak = fixList().length, cs = casesAvailable();
     var html = '<div class="top"><div><h1>Тренажёр</h1><div class="date">' + WD[d.getDay()] + ', ' + human(t) + '</div></div>' +
       '<div class="chips"><span class="chip">🔥 ' + sk + '</span><span class="chip">' + S.xp + ' XP</span></div></div>';
     html += '<div class="hero">' + BLOB + '<h1>Раунд дня</h1>';
@@ -494,8 +501,7 @@
     else if (due + nl > 0) html += '<p>К повторению: <b>' + due + '</b> · Новых: <b>' + nl + '</b></p><button class="btn light" data-act="start">Начать раунд</button></div>';
     else html += '<p>На сегодня всё: повторы сделаны, новые вопросы дня открыты.</p><button class="btn light" data-act="free">Свободная тренировка</button></div>';
     html += weekDays();
-    if (dk) html += '<button class="card row dkcard" data-act="dk" style="width:100%;text-align:left"><div><h3>Не помню</h3><div class="muted small">' + dk + ' ' + plural(dk, 'вопрос', 'вопроса', 'вопросов') + ' — надо поработать</div></div><span class="link">Повторить</span></button>';
-    if (weak) html += '<button class="card row weak" data-act="weak" style="width:100%;text-align:left"><div><h3>Работа над ошибками</h3><div class="muted small">' + weak + ' ' + plural(weak, 'вопрос', 'вопроса', 'вопросов') + ', где ты ошибалась</div></div><span class="link">Начать</span></button>';
+    if (weak) html += '<button class="card row weak" data-act="weak" style="width:100%;text-align:left"><div><h3>Работа над ошибками</h3><div class="muted small">' + weak + ' ' + plural(weak, 'вопрос', 'вопроса', 'вопросов') + ': ошибки и «Не&nbsp;помню»</div></div><span class="link">Начать</span></button>';
     if (cs) html += '<button class="card row" data-act="cases" style="width:100%;text-align:left"><div><h3>Кейсы недели</h3><div class="muted small">' + cs + ' ' + plural(cs, 'кейс', 'кейса', 'кейсов') + ' с развёрнутым ответом</div></div><span class="link">Решать</span></button>';
     var focus = weekFocus();
     if (focus.length) {
@@ -544,8 +550,8 @@
   // =====================================================================
   function startRound(mode, f) {
     f = f || null; var N = CFG.roundSize, items;
-    if (mode === 'weak') items = weakList(f).slice(0, N);
-    else if (mode === 'dk') items = dkList().slice(0, N);
+    if (mode === 'dk') mode = 'weak';
+    if (mode === 'weak') items = fixList(f).slice(0, N);
     else if (mode === 'cases' || mode === 'extra') {
       if (mode === 'cases') f = caseScope();
       else { var et = (f && f.topic) || (QS.filter(isExtra)[0] || {}).topic || ''; f = { topic: et, name: TOPIC[et] ? TOPIC[et].name : 'Дополнительно' }; }
@@ -569,7 +575,6 @@
   }
   function scopeName(f, mode) {
     if (mode === 'weak') return 'Работа над ошибками';
-    if (mode === 'dk') return 'Не помню';
     if (f && f.topic) return TOPIC[f.topic] ? TOPIC[f.topic].name : '';
     if (f && f.tag) return f.tag;
     if (f && f.name) return f.name;
@@ -720,18 +725,17 @@
     html += '<div class="lvlcard"><div class="small">Уровень ' + lv.n + ' из ' + lv.total + '</div><h1 style="font-size:28px;margin-top:4px">' + esc(lv.name) + '</h1>' +
       '<div class="bar"><i style="width:' + p + '%"></i></div><div class="small mt">' + S.xp + ' XP' + (lv.to ? ' · до уровня «' + esc(lv.next) + '» ' + (lv.to - S.xp) + ' XP' : '') + '</div></div>';
     html += '<button class="card row mt2" data-act="report" style="width:100%;text-align:left;background:var(--ink);color:var(--on-ink)"><div><h3>Отчёт для Claude</h3><div class="small" style="opacity:.7">Слабые места и заметки одним текстом — скопируй и отправь в чат</div></div><span class="link">Открыть</span></button>';
-    var freq = QS.filter(function (q) { var s = st(q.id); return s && s.wrong > 0; })
-      .sort(function (a, b) { return st(b.id).wrong - st(a.id).wrong || weakness(b) - weakness(a); });
-    var dks = dkList();
-    html += '<h2>Не помню</h2>';
-    if (!dks.length) html += '<div class="card muted">Сюда попадают вопросы, где ты нажала «Не помню» или «Не вспомнила». Вопрос уходит отсюда, когда ты его выучишь.</div>';
-    else html += '<div class="card dkcard"><p class="small">Над этим надо поработать:</p><ul class="dklist">' + dks.slice(0, 15).map(function (q) { return '<li>' + esc(q.t) + '</li>'; }).join('') + '</ul>' + (dks.length > 15 ? '<p class="small">и ещё ' + (dks.length - 15) + '</p>' : '') + '<button class="btn full mt" data-act="dk">Повторить «Не помню»</button></div>';
+    var fx = fixList();
     html += '<h2>Работа над ошибками</h2>';
-    if (!freq.length) html += '<div class="card muted">Здесь появятся вопросы, в которых ты ошибаешься чаще всего.</div>';
+    if (!fx.length) html += '<div class="card muted">Сюда попадают вопросы, где ты ошиблась или нажала «Не помню». Вопрос уходит отсюда, когда ты его выучишь.</div>';
     else {
-      html += '<div class="card"><p class="small muted">Чаще всего ошибаешься здесь:</p><ol class="errs">' + freq.slice(0, 10).map(function (q) {
-        var s = st(q.id); return '<li><span>' + esc(q.t) + '</span><b>' + s.wrong + ' ' + plural(s.wrong, 'ошибка', 'ошибки', 'ошибок') + '</b></li>';
-      }).join('') + '</ol>' + (weakList().length ? '<button class="btn full mt" data-act="weak">Начать раунд по ошибкам</button>' : '') + '</div>';
+      html += '<div class="card weak"><p class="small muted">Над этим надо поработать (' + fx.length + '):</p><ol class="errs">' + fx.slice(0, 12).map(function (q) {
+        var s = st(q.id), tags = [];
+        if (s.dk) tags.push('«Не помню»' + (s.dk > 1 ? ' ×' + s.dk : ''));
+        var ew = Math.max(0, s.wrong - (s.dk || 0)); // «Не помню» тоже считается ошибкой — не дублируем
+        if (ew) tags.push(ew + ' ' + plural(ew, 'ошибка', 'ошибки', 'ошибок'));
+        return '<li><span>' + esc(q.t) + '</span><b>' + tags.join(' · ') + '</b></li>';
+      }).join('') + '</ol>' + (fx.length > 12 ? '<p class="small muted">и ещё ' + (fx.length - 12) + '</p>' : '') + '<button class="btn full mt" data-act="weak">Начать раунд по ошибкам</button></div>';
     }
     html += '<h2>Вся программа</h2><p class="small muted" style="margin-top:-4px">Темы до весны. Процент появляется, когда в тему добавлены вопросы.</p>';
     TOPICS.forEach(function (tp) {
@@ -770,14 +774,10 @@
       var lg = S.log.filter(function (l) { return BY_ID[l.id] && BY_ID[l.id].topic === tp.id; });
       L.push('- ' + tp.name + ': ' + ts.learned + ' / ' + ts.seen + ' / ' + ts.total + (lg.length ? ' · ' + pct(lg.filter(function (l) { return l.g === 'r'; }).length, lg.length) + '%' : ' · ещё не начато'));
     });
-    var weak = weakList().slice(0, 20);
-    L.push(''); L.push('СЛАБЫЕ МЕСТА (до 20):');
-    if (!weak.length) L.push('- пока нет');
-    weak.forEach(function (q) { var s = st(q.id); L.push('- [' + q.id + '] ' + q.t + ': верно ' + s.right + ', частично ' + (s.partial || 0) + ', ошибок ' + s.wrong); });
-    var dks = dkList();
-    L.push(''); L.push('НЕ ПОМНЮ (' + dks.length + '):');
-    if (!dks.length) L.push('- нет');
-    dks.slice(0, 30).forEach(function (q) { L.push('- [' + q.id + '] ' + q.t + ' (раз: ' + st(q.id).dk + ')'); });
+    var fx = fixList();
+    L.push(''); L.push('РАБОТА НАД ОШИБКАМИ (' + fx.length + ', показаны до 30):');
+    if (!fx.length) L.push('- пока нет');
+    fx.slice(0, 30).forEach(function (q) { var s = st(q.id); L.push('- [' + q.id + '] ' + q.t + ': верно ' + s.right + ', частично ' + (s.partial || 0) + ', ошибок ' + s.wrong + (s.dk ? ', «Не помню» ' + s.dk : '')); });
     var nk = Object.keys(S.notes);
     L.push(''); L.push('ЗАМЕТКИ К ВОПРОСАМ:');
     if (!nk.length) L.push('- нет');
