@@ -2,7 +2,7 @@
  * Оболочка и данные кэшируются при установке (данные — по списку из data/manifest.json).
  * Все файлы запрашиваются сначала из сети, без сети — из кэша. Новые файлы из манифеста подхватываются сами.
  * После изменения app.js / styles.css / index.html достаточно поменять CACHE, чтобы сбросить старый кэш. */
-var CACHE = 'trainer-v15';
+var CACHE = 'trainer-v16';
 var SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest?v=2',
   'icons/icon-192-v2.png', 'icons/icon-512-v2.png', 'icons/apple-touch-icon-v2.png', 'data/manifest.json'];
 

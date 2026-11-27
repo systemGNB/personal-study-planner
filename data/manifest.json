@@ -1,5 +1,5 @@
 {
- "version": "2026-11-27.2",
+ "version": "2026-11-27.3",
  "topics": "topics.json",
  "config": "config.json",
  "weeks": "weeks.json",
@@ -12,7 +12,8 @@
   "bank/excel-base.json",
   "bank/cases-base.json",
   "bank/articles-2026-11.json",
-  "bank/theory-base.json"
+  "bank/theory-base.json",
+  "bank/history-base.json"
  ],
  "concepts": "concepts.json"
 }

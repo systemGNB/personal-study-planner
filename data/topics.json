@@ -58,7 +58,15 @@
    "id": "theory",
    "name": "Общая теория аналитики",
    "style": "outline",
-   "extra": true
+   "extra": true,
+   "desc": "СУБД, OLTP и OLAP, хранилища, ETL"
+  },
+  {
+   "id": "history",
+   "name": "История продуктов",
+   "style": "lav",
+   "extra": true,
+   "desc": "Как развивались известные приложения"
   }
  ]
 }
